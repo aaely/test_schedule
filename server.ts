@@ -5,7 +5,7 @@ const cookieSession = require('cookie-session');
 const neo4j = require('neo4j-driver');
 const cors = require('cors')
 const sgMail = require('@sendgrid/mail')
-sgMail.setApiKey('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')
+sgMail.setApiKey(process.env.SEDGRID_API_KEY)
 
 // ****************************
 //   Neo4j connection driver
