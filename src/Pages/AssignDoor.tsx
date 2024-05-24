@@ -1,6 +1,6 @@
-import React from 'react'
+import React, { useEffect } from 'react'
 import { currentTruck, currentTruck as t } from '../Recoil/trucks'
-import { currentView } from '../Recoil/router';
+import { currentView, lastPage } from '../Recoil/router';
 import { door } from '../Recoil/forms';
 import './CSS/EditTrailer.css'
 import { Box, Button, FormControl, Input, InputAdornment, InputLabel } from '@mui/material';
@@ -10,9 +10,10 @@ import { SiMoleculer } from 'react-icons/si';
 
 function AssignDoor() {
 
-    const view = useSetRecoilState(currentView)
+    const [view, setView] = useRecoilState(currentView)
     const truck = useRecoilValue(currentTruck)
     const [d, setD] = useRecoilState(door)
+    const [last, setLast] = useRecoilState(lastPage)
 
     const handleChange = ({target: { id, value}}: any) => {
         switch(id) {
@@ -23,14 +24,23 @@ function AssignDoor() {
         }
     }
 
+    const updateView = (screen: string) => {
+        setLast(view)
+        setView(screen)
+    }
+
+    useEffect(() => {
+        setD(truck.Schedule.DoorNumber)
+    },[])
+
     const setDoor = async () => {
-        view('landing')
+        setView(last)
         try {
             const params = {
                 TrailerID: truck.TrailerID,
                 Door: d
             }
-            const res = await axios.post('http://localhost:5555/api/set_door', params)
+            await axios.post('http://192.168.4.70:5555/api/set_door', params)
         } catch(error) {
             console.log(error)
         }
@@ -55,7 +65,7 @@ function AssignDoor() {
                 />
             </FormControl>
             <Button variant='contained' color='success' onClick={() => setDoor()}>Set Details</Button>
-            <Button variant='contained' color='error' onClick={() => view('landing')}>Back</Button>
+            <Button variant='contained' color='error' onClick={() => updateView(last)}>Back</Button>
         </Box>
     )
 }

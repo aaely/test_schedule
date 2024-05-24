@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { currentTruck as t } from '../Recoil/trucks'
-import { currentView } from '../Recoil/router';
-import { scac as s, scheduledDate as sd, lastFreeDate as fd, scheduledTime as st} from '../Recoil/forms';
+import { currentView, lastPage } from '../Recoil/router';
+import { scac as s, scheduledDate as sd, lastFreeDate as fd, scheduledTime as st, contactEmail} from '../Recoil/forms';
 import './CSS/EditTrailer.css'
 import Button from '@mui/material/Button'
 import { Box } from '@mui/material';
@@ -12,9 +12,10 @@ import InputAdornment from '@mui/material/InputAdornment';
 import FormControl from '@mui/material/FormControl';
 import {SiMoleculer, SiCheckmarx} from 'react-icons/si'
 import {FaDollarSign} from 'react-icons/fa'
-import { getCiscos, recent } from '../Recoil/trucks';
-import { get_load_info } from '../queries/get_load_info';
+import { recent } from '../Recoil/trucks';
+import { BiMailSend } from "react-icons/bi";
 import axios from 'axios';
+import { trailerScheduled } from '../socket';
 
 function ScheduleTruckForm() {
     const [currentTruck, setCurrentTruck] = useRecoilState(t)
@@ -24,8 +25,10 @@ function ScheduleTruckForm() {
     const [lastFreeDate, setLastFreeDate] = useRecoilState(fd)
     const [scheduledTime, setScheduledTime] = useRecoilState(st)
     const [r, setR] = useRecoilState(recent)
+    const [ce, setCe] = useRecoilState(contactEmail)
     //const formattedDate = `${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getDate().toString().padStart(2, '0')}/${currentDate.getFullYear()}`;
-    const view = useSetRecoilState(currentView)
+    const [view, setView] = useRecoilState(currentView)
+    const [last, setLast] = useRecoilState(lastPage)
 
     const handleChange = ({target: { id, value}}: any) => {
         switch(id) {
@@ -41,23 +44,31 @@ function ScheduleTruckForm() {
             case 'scheduledTime':
                 setScheduledTime(value)
                 break;
+            case 'contactEmail':
+                setCe(value)
+                break;
             default: break;
         }
     }
 
+    const updateView = (screen: string) => {
+        setLast(view)
+        setView(screen)
+    }
+
     useEffect(() => {
-        (async() => {
-            try{
-                const res = await get_load_info(currentTruck.TrailerID)
-                console.log(res)
-            } catch(error) {
-                console.log(error)
-            }
-        })()
-    })
+        setScac(currentTruck.Schedule.CarrierCode)
+        setScheduledDate(currentTruck.Schedule.ScheduleDate)
+        setLastFreeDate(currentTruck.Schedule.LastFreeDate)
+        setScheduledTime(currentTruck.Schedule.ScheduleTime)
+        if(currentTruck.Schedule.ContactEmail?.length > 0) {
+            setCe(currentTruck.Schedule.ContactEmail)
+        }
+    }, [])
 
     const setDetails = async () => {
-        view('landing')
+        setLast(view)
+        setView('landing')
         const recentTrucks = [...r]
         const next = {
             TrailerID: currentTruck.TrailerID,
@@ -66,6 +77,15 @@ function ScheduleTruckForm() {
         }
         recentTrucks.push(next)
         setR(recentTrucks)
+        trailerScheduled(
+            currentTruck.TrailerID,
+            'TRAILER_SCHEDULED',
+            lastFreeDate,
+            scheduledDate,
+            scheduledTime,
+            scac,
+            currentDate
+        )
         try {
             const params = {
                 TrailerID: currentTruck.TrailerID,
@@ -74,8 +94,9 @@ function ScheduleTruckForm() {
                 RequestDate: currentDate,
                 LastFreeDate: lastFreeDate,
                 CarrierCode: scac,
+                ContactEmail: ce,
             }
-            const res = await axios.post('http://localhost:5555/api/set_schedule', params)
+            const res = await axios.post('http://192.168.4.70:5555/api/set_schedule', params)
         } catch(error) {
             console.log(error)
         }
@@ -142,8 +163,23 @@ function ScheduleTruckForm() {
                 }
                 />
                 </FormControl>
+                <FormControl sx={{ m: 1, width: '25ch' }} variant="standard">
+                <InputLabel htmlFor="contactEmail">Contact Email</InputLabel>
+                <Input
+                id='contactEmail'
+                type='text'
+                value={ce}
+                onChange={handleChange}
+                placeholder='example@gmail.com'
+                startAdornment={
+                    <InputAdornment position='start'>
+                        <BiMailSend/>
+                    </InputAdornment>
+                }
+                />
+                </FormControl>
                 <Button variant='contained' color='success' onClick={() => setDetails()}>Set Details</Button>
-                <Button variant='contained' color='error' onClick={() => view('landing')}>Back</Button>
+                <Button variant='contained' color='error' onClick={() => updateView(last)}>Back</Button>
         </Box>
     )
 }

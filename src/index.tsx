@@ -5,6 +5,7 @@ import Loader from './Components/Loader';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { RecoilRoot } from 'recoil'
+import RecoilNexus from 'recoil-nexus';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 
@@ -16,7 +17,8 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
       <RecoilRoot>
-      <Suspense fallback={<Loader type={'circles'} />}>
+        <RecoilNexus />
+        <Suspense fallback={<Loader type={'circles'} />}>
         <App />
       </Suspense>
       </RecoilRoot>

@@ -11,3 +11,15 @@ export const currentView = atom<string>({
     default: 'landing',
     effects_UNSTABLE: [persistAtom]
 })
+
+export const navToggle = atom<boolean>({
+  key: 'navToggle',
+  default: false,
+  effects_UNSTABLE: [persistAtom]
+})
+
+export const lastPage = atom<string>({
+  key: 'lastPage',
+  default: 'landing',
+  effects_UNSTABLE: [persistAtom]
+})

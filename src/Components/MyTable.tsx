@@ -1,11 +1,10 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useEffect, useState } from 'react'
-import Table from 'react-bootstrap/Table'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import { trucks as trk, currentTruck as ct, getCiscos } from '../Recoil/trucks'
-import { trailers } from '../Recoil/queries'
-import { currentView } from '../Recoil/router'
+import { useRecoilState, useSetRecoilState } from 'recoil'
+import { trucks as trk, currentTruck as ct } from '../Recoil/trucks'
+import { currentView, lastPage } from '../Recoil/router'
 import { Button } from 'react-bootstrap'
+import { updateTrailer, trailerArrived } from '../socket'
 import axios from 'axios'
 import { getTrucks } from '../queries/getTrucks'
 import './CSS/MyTable.css'
@@ -13,12 +12,12 @@ import './CSS/MyTable.css'
 
 export default function MyTable() {
   const [trucks, setTrucks] = useRecoilState(trk)
-  const trl = useRecoilValue(trailers)
-  const setView = useSetRecoilState(currentView)
-  const [loading, setLoading] = useState(true)
+  const [view, setView] = useRecoilState(currentView)
   const setCurrentTruck = useSetRecoilState(ct)
+  const last = useSetRecoilState(lastPage)
 
   const updateView = (tr: any, screen: string) => {
+    last(view)
     setView(screen)
     setCurrentTruck(tr)
   }
@@ -28,47 +27,33 @@ export default function MyTable() {
       try {
         const trks = await getTrucks()
         setTrucks(trks)
+        console.log(trks)
       } catch(error) {
         console.log(error)
       }
     })()
   }, [])
 
-  const Hot = async (idx: number, trl: string) => {
-    let i: number
-    let updatedTrucks = trucks.map((trk: any, index: number) => {
-      if (index === idx) {
-        i = idx
-        // Clone the Schedule object and update its IsHot property
-        let updatedSchedule = { ...trk.Schedule, IsHot: !trk.Schedule.IsHot };
-        // Return a new truck object with the updated Schedule
-        return { ...trk, Schedule: updatedSchedule };
-      }
-      return trk;
-    });
-    setTrucks(updatedTrucks);
+  const Hot = async (trl: string) => {
+
+    
+    updateTrailer(trl)
     try {
-      const res = await axios.post('http://localhost:5555/api/hot_trailer', {param: trl})
+      const res = await axios.post('http://192.168.4.70:5555/api/hot_trailer', {param: trl})
     } catch(error) {
       console.log(error)
     }
   }
 
-  const Arrived = async (idx: number, trl: string) => {
-    let i: number
-    let updatedTrucks = trucks.map((trk: any, index: number) => {
-      if (index === idx) {
-        i = idx
-        // Clone the Schedule object and update its IsHot property
-        let updatedSchedule = { ...trk.Schedule, ArrivalTime: new Date(Date.now()).toLocaleTimeString() };
-        // Return a new truck object with the updated Schedule
-        return { ...trk, Schedule: updatedSchedule };
-      }
-      return trk;
-    });
-    setTrucks(updatedTrucks);
+  const Arrived = async (trl: string) => {
+    const now = new Date(Date.now()).toLocaleTimeString()
+    trailerArrived(trl, now)
     try {
-      const res = await axios.post('http://localhost:5555/api/set_arrivalTime', {param: trl})
+      const params = {
+        TrailerID: trl,
+        ArrivalTime: now
+      }
+      const res = await axios.post('http://192.168.4.70:5555/api/set_arrivalTime', {params})
     } catch(error) {
       console.log(error)
     }
@@ -97,21 +82,24 @@ export default function MyTable() {
           <tr key={index} style={{ backgroundColor: tr.Schedule.IsHot ? 'red' : 'inherit' }}>
               <td>{index + 1}</td>
               <td>{tr.Schedule.RequestDate}</td>
-              <td><a onClick={() => updateView(tr, 'editTrailer')}>{tr.TrailerID}</a></td>
+              <td><a onClick={() => updateView(tr, 'loadDetails')}>{tr.TrailerID}</a></td>
               <td>{tr.Schedule.CarrierCode}</td>
               <td>{renderLocations(tr.CiscoIDs)}</td>
               <td>{tr.Schedule.LastFreeDate}</td>
               <td>{tr.Schedule.ScheduleDate}</td>
               <td>{tr.Schedule.ScheduleTime}</td>
-              <td>{tr.Schedule.ArrivalTime.length === 0 ? <Button variant='success' onClick={() => Arrived(index, tr.TrailerID)}>Check In</Button> : tr.Schedule.ArrivalTime}</td>
+              <td>{tr.Schedule.ArrivalTime.length === 0 && tr.Schedule.ScheduleDate.length > 0 ? <Button variant='success' onClick={() => Arrived(tr.TrailerID)}>Check In</Button> : tr.Schedule.ArrivalTime}</td>
               <td>{tr.Schedule.DoorNumber}</td>
-              <td>{tr.Schedule.IsHot ? <Button variant='success' onClick={() => Hot(index, tr.TrailerID)}>Mark Not Hot</Button> : <Button variant='danger' onClick={() => Hot(index, tr.TrailerID)}>Mark Hot</Button>}</td>
+              <td>{tr.Schedule.IsHot ? <Button variant='success' onClick={() => Hot(tr.TrailerID)}>Mark Not Hot</Button> : <Button variant='danger' onClick={() => Hot(tr.TrailerID)}>Mark Hot</Button>}</td>
+              <td><Button color='success' onClick={() => updateView(tr, 'editTrailer')}>Edit</Button></td>
           </tr>          
         )
       });
   }
 
     return(
+      <div>
+        <h1 style={{textAlign: 'center'}}>All Trucks</h1>
         <table>
           <thead>
             <tr>
@@ -132,5 +120,6 @@ export default function MyTable() {
             {renderTrucks()}
           </tbody>
         </table>
+      </div>
     )
 }

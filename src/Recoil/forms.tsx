@@ -31,6 +31,12 @@ export const messages = atom({
     effects: [persistAtom]
 })
 
+export const contactEmail = atom({
+    key: 'contactEmail',
+    default: '',
+    effects: [persistAtom]
+})
+
 export const scheduledDate = atom({
     key: 'scheduledDate',
     default: '',
@@ -54,3 +60,4 @@ export const scac = atom({
     default: '',
     effects: [persistAtom]
 })
+

@@ -4,6 +4,8 @@ const { send } = require('process');
 const cookieSession = require('cookie-session');
 const neo4j = require('neo4j-driver');
 const cors = require('cors')
+const sgMail = require('@sendgrid/mail')
+sgMail.setApiKey('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')
 
 // ****************************
 //   Neo4j connection driver
@@ -21,7 +23,7 @@ let driver
   } catch (error) {
     console.log(`Connection error\n${error}\nCause: ${error.cause}`)
   }
-}) ()
+})()
 
 
 // ***************************
@@ -43,9 +45,20 @@ app.get('/api/trailers', async (req, res) => {
     database: 'trucks',
   })
   try {
-    const result = await session.run('MATCH (trailer:Trailer) RETURN trailer as TrailerID');
-    console.log(result)
-    const data = result.records.map(record => record.get('TrailerID').properties);
+    const result = await session.run(`
+    MATCH (trailer:Trailer)-[:HAS_SID]->(sid:SID)-[:HAS_PART]->(part:Part)
+    RETURN trailer.id AS TrailerID, COLLECT({sid: sid.id, cisco: sid.ciscoID,
+    partNumber: part.number, quantity: part.quantity}) AS SidsAndParts`);
+    console.log(result.records)
+    const data = result.records.map(record => ({
+      TrailerID: record.get('TrailerID'),
+      Sids: record.get('SidsAndParts').map(sp => ({
+        sid: sp.sid,
+        cisco: sp.cisco,
+        partNumber: sp.partNumber,
+        quantity: sp.quantity
+      }))
+    }));
     res.send(data);
   } catch (error) {
     console.error(error);
@@ -67,11 +80,10 @@ app.get('/api/schedule_trailer', async (req, res) => {
     MATCH (trailer)-[:HAS_CISCO]->(cisco:Cisco)
     RETURN trailer.id AS TrailerID, s, COLLECT(cisco.id) AS CiscoIDs`
   );
-    console.log(result.records.map(record=>record.properties))
     const data = result.records.map(record => ({
       TrailerID: record.get('TrailerID'),
       Schedule: record.get('s').properties,
-      CiscoIDs: record.get('CiscoIDs')
+      CiscoIDs: record.get('CiscoIDs'),
     }));
     res.send(data);
   } catch (error) {
@@ -111,7 +123,6 @@ app.post('/api/set_door', async (req, res) => {
     SET s.DoorNumber = "${req.body.Door}"
     RETURN trailer, s`
   );
-  console.log(req.body)
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -126,11 +137,10 @@ app.post('/api/set_arrivalTime', async (req, res) => {
   })
   try {
     const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
-    WHERE trailer.id = "${req.body.param}"
-    SET s.ArrivalTime = "${req.body.ArrivalTime}"
+    WHERE trailer.id = "${req.body.params.TrailerID}"
+    SET s.ArrivalTime = "${req.body.params.ArrivalTime}"
     RETURN trailer, s`
   );
-  console.log(req.body)
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -143,7 +153,6 @@ app.post('/api/set_schedule', async (req, res) => {
   const session = driver.session({
     database: 'trucks',
   })
-  console.log(req.body)
   try {
     const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
     WHERE trailer.id = "${req.body.TrailerID}"
@@ -170,11 +179,9 @@ app.post('/api/get_cisco', async (req, res) => {
     database: 'trucks',
   })
   try {
-    console.log(req.body)
     const result = await session.run(`MATCH (trailer:Trailer {id: '${req.body.param}'})-[:HAS_CISCO]->(cisco:Cisco)
     RETURN COLLECT(cisco.id) AS CiscoIDs`)
     const data = result.records.map(record => record.get('CiscoIDs'));
-    console.log(data)
     res.send(data);
   } catch (error) {
     console.error(error);
@@ -189,14 +196,13 @@ app.post('/api/get_load_info', async (req, res) => {
     database: 'trucks',
   })
   try {
-    console.log(req.body)
     const result = await session.run(`MATCH (trailer:Trailer {id: '${req.body.param}'})-[:HAS_SID]->(sid:SID)-[:HAS_PART]->(part:Part)
     RETURN sid, COLLECT({partNumber: part.number, quantity: part.quantity}) AS parts`)
     const data = result.records.map(record => ({
       Sids: record.get('sid').properties,
       Parts: record.get('parts')
     }));
-    console.log(result.records)
+    console.log(data)
     res.send(data);
   } catch (error) {
     console.error(error);
@@ -205,6 +211,64 @@ app.post('/api/get_load_info', async (req, res) => {
     await session.close();
   }
 })
+
+app.post('/api/send_email', async (req, res) => {
+  try {
+    await sgMail.send(req.body.msg)
+    console.log('email sent')
+  } catch(error) {
+    console.log(error)
+  }
+  
+})
+
+app.post('/api/todays_trucks', async (req, res) => {
+  const session = driver.session({
+    database: 'trucks',
+  })
+  try {
+    console.log(req.body)
+    const result = await session.run(`
+    MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
+    WHERE s.ScheduleDate = '${req.body.date}'
+    WITH trailer, s
+    MATCH (trailer)-[:HAS_CISCO]->(cisco:Cisco)
+    RETURN trailer.id AS TrailerID, s, COLLECT(cisco.id) AS CiscoIDs`
+  );
+    const data = result.records.map(record => ({
+      TrailerID: record.get('TrailerID'),
+      Schedule: record.get('s').properties,
+      CiscoIDs: record.get('CiscoIDs')
+    }));
+    res.send(data)
+  } catch(error) {
+    console.log(error)
+  }
+}) 
+
+app.post('/api/trucks_date_range', async (req, res) => {
+  const session = driver.session({
+    database: 'trucks',
+  })
+  try {
+    console.log(req.body)
+    const result = await session.run(`
+    MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
+    WHERE s.ScheduleDate >= '${req.body.startDate}' and s.ScheduleDate <= '${req.body.endDate}'
+    WITH trailer, s
+    MATCH (trailer)-[:HAS_CISCO]->(cisco:Cisco)
+    RETURN trailer.id AS TrailerID, s, COLLECT(cisco.id) AS CiscoIDs`
+  );
+    const data = result.records.map(record => ({
+      TrailerID: record.get('TrailerID'),
+      Schedule: record.get('s').properties,
+      CiscoIDs: record.get('CiscoIDs')
+    }));
+    res.send(data)
+  } catch(error) {
+    console.log(error)
+  }
+}) 
 
 // **********************
 // SocketIO Services
@@ -223,42 +287,37 @@ const io = socket(server, {
     },
 })
 
-let peers = []
-const broadcastEventTypes = {
-    'GROUP_CALL_ROOMS': 'GROUP_CALL_ROOMS'
-}
 
 io.on('connection', socket => {
     socket.emit('connection', null)
     console.log(socket.id)
 
-    socket.on('register-new-user', data => {
-        peers.push({
-            username: data.username,
-            message: data.message,
-            socket: data.socketId
-        })
-        console.log(peers)
-        io.sockets.emit('broadcast', {
-            event: 'ACTIVE_USERS',
-            activeusers: peers
-        })
+    socket.on('hot-trailer', data => {
+      socket.broadcast.emit('broadcast', {
+        event: 'HOT_TRAILER',
+        trailer: data.trailer
+      })
     })
-    socket.on('remove-user', user => {
-        let index = peers.findIndex(x => x.username === user)
-        peers.splice(index, 1)
-        console.log(peers)
-        io.sockets.emit('broadcast', {
-            event: 'ACTIVE_USERS',
-            activeusers: peers
-        })
+
+    socket.on('trailer-arrived', data => {
+      console.log(data)
+      socket.broadcast.emit('broadcast', {
+        event: 'TRAILER_ARRIVED',
+        trailer: data.trailer,
+        time: data.time
+      })
     })
-    socket.on('disconnect', () => {
-        let index = peers.find(x => x.socketId === socket.id)
-        peers.splice(index, 1)
-        io.sockets.emit('broadcast', {
-            event: 'ACTIVE_USERS',
-            activeusers: peers
-        })
+
+    socket.on('trailer-scheduled', data => {
+      console.log(data)
+      socket.broadcast.emit('broadcast', {
+        event: 'TRAILER_SCHEDULED',
+        trailer: data.trailer,
+        lfd: data.lfd,
+        scd: data.scd,
+        sct: data.sct,
+        scac: data.scac,
+        rqd: data.rqd
+      })
     })
 })

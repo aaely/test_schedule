@@ -33,7 +33,7 @@ export const getCiscos = selector({
         try {
             get(update)
             const tr = get(currentTruck)
-            const res = await axios.post('http://localhost:5555/api/get_cisco', {param: tr.TrailerID})
+            const res = await axios.post('http://192.168.4.70:5555/api/get_cisco', {param: tr.TrailerID})
             console.log('Response:', res.data)
             return res.data
         } catch (error) {
@@ -46,5 +46,37 @@ export const recent = atom({
     key: 'recent',
     default: [],
     dangerouslyAllowMutability: true,
+    effects: [persistAtom]
+})
+
+export const loadDetails = atom({
+    key: 'loadDetails',
+    default: [],
+    dangerouslyAllowMutability: true,
+    effects: [persistAtom]
+})
+
+export const todaysTrucks = selector({
+    key: 'todaysTrucks',
+    get: ({get}) => {
+        const t = get(trucks)
+        const today = new Date().toISOString().split('T')[0];
+        const filtered = t.filter((trk: any) => {
+            return trk.Schedule.ScheduleDate === today
+        })
+        console.log(filtered)
+        return filtered
+    },
+})
+
+export const date1 = atom({
+    key: 'date1',
+    default: '',
+    effects: [persistAtom]
+})
+
+export const date2 = atom({
+    key: 'date2',
+    default: '',
     effects: [persistAtom]
 })

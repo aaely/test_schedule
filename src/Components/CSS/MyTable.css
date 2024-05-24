@@ -1,12 +1,14 @@
 table {
     border: 1px solid #ddd;
     border-collapse: collapse;
-    width: 100%;
+    width: 95vw;
+    margin-top: 5%;
+    text-align: center;
   }
   
   /* Add border to table cells */
   th, td {
-    border: 1px solid #ddd;
+    border: 1px solid #3b3b3b;
     padding: 8px;
     text-align: center;
   }
@@ -14,5 +16,15 @@ table {
   /* Change opacity on hover */
   tr:hover {
     opacity: 0.7;
-    background-color: #969696a6;
+    background-color: #969696e7;
   }
+
+  .container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-evenly;
+    height: 100vh;
+    width: 100vw;
+    margin-top: 7vh;
+}

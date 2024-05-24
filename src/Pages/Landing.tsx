@@ -1,14 +1,15 @@
 import React from 'react';
 import logo from '../logo.svg';
-import '../Components/CSS/App.css'
+import '../Components/CSS/MyTable.css'
 import MyTable from '../Components/MyTable';
+import { getTrucks } from '../queries/getTrucks'
 
-function App() {
+function Landing() {
   return (
-    <div className="App">
+    <div className="container" style={{display: 'flex', width: '100vw', height: '100vh'}}>
       <MyTable />
     </div>
   );
 }
 
-export default App;
+export default Landing;

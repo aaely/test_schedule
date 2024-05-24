@@ -6,12 +6,24 @@ import { currentView } from './Recoil/router';
 import { animated, useTransition } from 'react-spring';
 import EditTrailer from './Pages/EditTrailer';
 import AssignDoor from './Pages/AssignDoor'
+import LoadDetails from './Pages/LoadDetails';
+import Nav from './Components/Nav';
+import RecentTrucks from './Pages/RecentTrucks';
+import TodaysSchedule from './Pages/TodaysSchedule'
+import TrucksByDate from './Pages/TrucksByDate'
+import CreateCSV from './Pages/CreateCSV';
+
 
 const hashMap = new Map([
   ['landing', <Landing />],
   ['editTrailer', <EditTrailer />],
-  ['assignDoor', <AssignDoor />]
-])
+  ['assignDoor', <AssignDoor />],
+  ['loadDetails', <LoadDetails />],
+  ['recentTrucks', <RecentTrucks />],
+  ['todaysSchedule', <TodaysSchedule />],
+  ['trucksByDate', <TrucksByDate />],
+  ['createCsv', <CreateCSV />]
+]) 
 
 function App() {
 
@@ -28,6 +40,7 @@ function App() {
   return transition((style, i) => {
     return (
       <div style={{position: 'absolute', width: '100vw', height: '100vh'}}>
+        <Nav />
         <animated.div style={style}>
           {hashMap.get(i)}
         </animated.div>
