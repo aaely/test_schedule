@@ -40,15 +40,16 @@ app.listen(5555, () => {
   console.log('server is listening on :5555')
 })
 
-app.get('/api/trailers', async (req, res) => {
+app.post('/api/trailers', async (req, res) => {
   const session = driver.session({
     database: 'trucks',
   })
   try {
     const result = await session.run(`
-    MATCH (trailer:Trailer)-[:HAS_SID]->(sid:SID)-[:HAS_PART]->(part:Part)
-    RETURN trailer.id AS TrailerID, COLLECT({sid: sid.id, cisco: sid.ciscoID,
-    partNumber: part.number, quantity: part.quantity}) AS SidsAndParts`);
+    MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule {ScheduleDate: '${req.body.date}'})
+    MATCH (trailer)-[:HAS_SID]->(sid:SID)-[:HAS_PART]->(part:Part)
+    RETURN trailer.id AS TrailerID, COLLECT({sid: sid.id, cisco: sid.ciscoID, partNumber: part.number, quantity: part.quantity}) AS SidsAndParts
+    `);
     console.log(result.records)
     const data = result.records.map(record => ({
       TrailerID: record.get('TrailerID'),
@@ -100,10 +101,12 @@ app.post('/api/hot_trailer', async (req, res) => {
     database: 'trucks',
   })
   try {
-    const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
+    const result = await session.run(`
+    MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
     WHERE trailer.id = "${req.body.param}"
     SET s.IsHot = NOT s.IsHot  
-    RETURN trailer, s`
+    RETURN trailer, s
+    `
   );
   } catch (error) {
     console.error(error);
@@ -179,8 +182,10 @@ app.post('/api/get_cisco', async (req, res) => {
     database: 'trucks',
   })
   try {
-    const result = await session.run(`MATCH (trailer:Trailer {id: '${req.body.param}'})-[:HAS_CISCO]->(cisco:Cisco)
-    RETURN COLLECT(cisco.id) AS CiscoIDs`)
+    const result = await session.run(`
+    MATCH (trailer:Trailer {id: '${req.body.param}'})-[:HAS_CISCO]->(cisco:Cisco)
+    RETURN COLLECT(cisco.id) AS CiscoIDs
+    `)
     const data = result.records.map(record => record.get('CiscoIDs'));
     res.send(data);
   } catch (error) {
@@ -196,8 +201,10 @@ app.post('/api/get_load_info', async (req, res) => {
     database: 'trucks',
   })
   try {
-    const result = await session.run(`MATCH (trailer:Trailer {id: '${req.body.param}'})-[:HAS_SID]->(sid:SID)-[:HAS_PART]->(part:Part)
-    RETURN sid, COLLECT({partNumber: part.number, quantity: part.quantity}) AS parts`)
+    const result = await session.run(`
+    MATCH (trailer:Trailer {id: '${req.body.param}'})-[:HAS_SID]->(sid:SID)-[:HAS_PART]->(part:Part)
+    RETURN sid, COLLECT({partNumber: part.number, quantity: part.quantity}) AS parts
+    `)
     const data = result.records.map(record => ({
       Sids: record.get('sid').properties,
       Parts: record.get('parts')
@@ -233,8 +240,8 @@ app.post('/api/todays_trucks', async (req, res) => {
     WHERE s.ScheduleDate = '${req.body.date}'
     WITH trailer, s
     MATCH (trailer)-[:HAS_CISCO]->(cisco:Cisco)
-    RETURN trailer.id AS TrailerID, s, COLLECT(cisco.id) AS CiscoIDs`
-  );
+    RETURN trailer.id AS TrailerID, s, COLLECT(cisco.id) AS CiscoIDs
+    `);
     const data = result.records.map(record => ({
       TrailerID: record.get('TrailerID'),
       Schedule: record.get('s').properties,
@@ -257,8 +264,8 @@ app.post('/api/trucks_date_range', async (req, res) => {
     WHERE s.ScheduleDate >= '${req.body.startDate}' and s.ScheduleDate <= '${req.body.endDate}'
     WITH trailer, s
     MATCH (trailer)-[:HAS_CISCO]->(cisco:Cisco)
-    RETURN trailer.id AS TrailerID, s, COLLECT(cisco.id) AS CiscoIDs`
-  );
+    RETURN trailer.id AS TrailerID, s, COLLECT(cisco.id) AS CiscoIDs
+    `);
     const data = result.records.map(record => ({
       TrailerID: record.get('TrailerID'),
       Schedule: record.get('s').properties,
@@ -305,6 +312,15 @@ io.on('connection', socket => {
         event: 'TRAILER_ARRIVED',
         trailer: data.trailer,
         time: data.time
+      })
+    })
+
+    socket.on('door-assigned', data => {
+      console.log(data)
+      socket.broadcast.emit('broadcast', {
+        event: 'ASSIGN_DOOR',
+        trailer: data.trailer,
+        door: data.door
       })
     })
 

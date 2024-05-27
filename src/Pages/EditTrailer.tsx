@@ -96,7 +96,7 @@ function ScheduleTruckForm() {
                 CarrierCode: scac,
                 ContactEmail: ce,
             }
-            const res = await axios.post('http://192.168.4.70:5555/api/set_schedule', params)
+            const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_schedule`, params)
         } catch(error) {
             console.log(error)
         }

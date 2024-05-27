@@ -6,6 +6,7 @@ import './CSS/EditTrailer.css'
 import { Box, Button, FormControl, Input, InputAdornment, InputLabel } from '@mui/material';
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import axios from 'axios';
+import { assignDoor } from '../socket';
 import { SiMoleculer } from 'react-icons/si';
 
 function AssignDoor() {
@@ -34,13 +35,14 @@ function AssignDoor() {
     },[])
 
     const setDoor = async () => {
-        setView(last)
+        assignDoor(truck.TrailerID, d)
+        setTimeout(() => {setView(last)}, 200)
         try {
             const params = {
                 TrailerID: truck.TrailerID,
                 Door: d
             }
-            await axios.post('http://192.168.4.70:5555/api/set_door', params)
+            await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_door`, params)
         } catch(error) {
             console.log(error)
         }

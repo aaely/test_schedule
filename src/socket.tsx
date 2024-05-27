@@ -4,7 +4,7 @@ import { trucks } from './Recoil/trucks';
 import { lastFreeDate } from './Recoil/forms';
 
 
-const URL = 'http://192.168.4.70:3030';
+const URL = `http://${process.env.REACT_APP_IP_ADDR}:3030`;
 
 let socket: any
 
@@ -64,18 +64,40 @@ export const connectWithWebSocket = () => {
                 setRecoil(trucks, updatedTrucks)
                 break;
             }
+            case 'ASSIGN_DOOR' : {
+                console.log('door_assigned')
+                const t = getRecoil(trucks)
+                let updatedTrucks = t.map((trk: any) => {
+                    if (trk.TrailerID === data.trailer) {
+                      // Clone the Schedule object and update its IsHot property
+                      let updatedSchedule = { ...trk.Schedule, DoorNumber: data.door };
+                      // Return a new truck object with the updated Schedule
+                      return { ...trk, Schedule: updatedSchedule };
+                    }
+                    return trk;
+                  });
+                setRecoil(trucks, updatedTrucks)
+                break;
+            }
             default: break;
         }
     })
 }
 
-export const updateTrailer = (trailer: any) => {
+export const updateTrailer = (trailer: string) => {
     socket.emit('hot-trailer', {
         trailer
     }) 
 }
 
-export const trailerArrived = (trailer: any, time: any) => {
+export const assignDoor = (trailer: string, door: string) => {
+    socket.emit('door-assigned', {
+        trailer,
+        door
+    }) 
+}
+
+export const trailerArrived = (trailer: string, time: any) => {
     socket.emit('trailer-arrived', {
         trailer,
         time

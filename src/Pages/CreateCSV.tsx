@@ -20,13 +20,14 @@ function CreateCSV() {
         const year = date.getFullYear();
         const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-based
         const day = date.getDate().toString().padStart(2, '0');
-        return `${year}${month}${day}`;
+        return `${year}-${month}-${day}`;
     }
 
     useEffect(() => {
         (async() => {
             try{
-                const res = await get_csv_data()
+                const res = await get_csv_data(formattedDate)
+                console.log(formattedDate, res)
                 setTrucks(res)
             } catch(error) {
                 console.log(error)
@@ -81,7 +82,7 @@ function CreateCSV() {
 
     return (
         <Box className='container'>
-            <CSVLink style={{margin: '5%'}} data={csv}>Download CSV</CSVLink>
+            <CSVLink style={{margin: '5%'}} filename='receipt01' data={csv}>Download CSV</CSVLink>
             <Button style={{margin: '30px'}} variant='contained' color='error' onClick={() => updateView(last)}>Back</Button>
         </Box>
     )

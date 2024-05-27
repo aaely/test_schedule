@@ -39,7 +39,7 @@ export default function MyTable() {
     
     updateTrailer(trl)
     try {
-      const res = await axios.post('http://192.168.4.70:5555/api/hot_trailer', {param: trl})
+      const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/hot_trailer`, {param: trl})
     } catch(error) {
       console.log(error)
     }
@@ -53,7 +53,7 @@ export default function MyTable() {
         TrailerID: trl,
         ArrivalTime: now
       }
-      const res = await axios.post('http://192.168.4.70:5555/api/set_arrivalTime', {params})
+      const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_arrivalTime`, {params})
     } catch(error) {
       console.log(error)
     }

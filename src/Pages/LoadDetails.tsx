@@ -120,7 +120,7 @@ function LoadDetails() {
                     </React.Fragment>
                 )
             })}
-            <CSVLink style={{margin: '5%'}} data={csv}>Download CSV</CSVLink>
+            <CSVLink style={{margin: '5%'}} filename='receipt01' data={csv}>Download CSV</CSVLink>
             <Button style={{margin: '30px'}} variant='contained' color='error' onClick={() => updateView(last)}>Back</Button>
         </Box>
     )
