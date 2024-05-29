@@ -17,6 +17,7 @@ import { BiMailSend } from "react-icons/bi";
 import axios from 'axios';
 import { trailerScheduled } from '../socket';
 
+
 function ScheduleTruckForm() {
     const [currentTruck, setCurrentTruck] = useRecoilState(t)
     const currentDate = new Date(Date.now()).toLocaleDateString();
@@ -57,7 +58,9 @@ function ScheduleTruckForm() {
     }
 
     useEffect(() => {
-        setScac(currentTruck.Schedule.CarrierCode)
+        if(currentTruck.Schedule.CarrierCode.length > 1) {
+            setScac(currentTruck.Schedule.CarrierCode)
+        }
         setScheduledDate(currentTruck.Schedule.ScheduleDate)
         setLastFreeDate(currentTruck.Schedule.LastFreeDate)
         setScheduledTime(currentTruck.Schedule.ScheduleTime)
@@ -74,6 +77,7 @@ function ScheduleTruckForm() {
             TrailerID: currentTruck.TrailerID,
             ScheduleDate: scheduledDate,
             ScheduleTime: scheduledTime,
+            Carrier: scac
         }
         recentTrucks.push(next)
         setR(recentTrucks)

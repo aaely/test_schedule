@@ -21,6 +21,16 @@ function TodaysSchedule() {
             try{
                 const today = formatDate(new Date(Date.now()).toLocaleDateString())
                 const res = await getTrucksByDate(today)
+                res.sort((a: any, b: any) => {
+                    const [hoursA, minutesA] = a.Schedule.ScheduleTime.split(':').map(Number);
+                    const [hoursB, minutesB] = b.Schedule.ScheduleTime.split(':').map(Number);
+                    
+                    if (hoursA === hoursB) {
+                        return minutesA - minutesB;
+                    } else {
+                        return hoursA - hoursB;
+                    }
+                });
                 setTrucks(res)
             } catch(error) {
                 console.log(error)

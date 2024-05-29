@@ -1,11 +1,13 @@
 import { useEffect } from 'react'
-import { connectWithWebSocket } from '../socket'
+import { connectWithWebSocket, disconnectWebSocket } from '../socket'
 
 const useWebSocket = () => {
     useEffect(() => {
         connectWithWebSocket()
 
-        return () => {}
+        return () => {
+            disconnectWebSocket()
+        }
     }, [])
 }
 

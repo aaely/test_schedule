@@ -1,7 +1,6 @@
 import socketio from 'socket.io-client';
 import { setRecoil, getRecoil } from 'recoil-nexus';
 import { trucks } from './Recoil/trucks';
-import { lastFreeDate } from './Recoil/forms';
 
 
 const URL = `http://${process.env.REACT_APP_IP_ADDR}:3030`;
@@ -136,8 +135,9 @@ export const sendMessage = (username: any, message: any) => {
     })
 }
 
-/*const handleBroadcastEvents = event => {
-    switch event {
-        case 'ACTIVE_USERS'
+export const disconnectWebSocket = () => {
+    if (socket) {
+      socket.disconnect();
+      socket = null;
     }
-}*/
+}

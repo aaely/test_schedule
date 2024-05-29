@@ -58,8 +58,8 @@ function CreateCSV() {
 
     const createCsvData = () => {
         let c = []
-        for(let i = 0; i < trucks.length; i ++) {
-            for(let j = 0; j < trucks[i].Sids.length; j++) {
+        for(let i = 0; i < trucks?.length; i ++) {
+            for(let j = 0; j < trucks[i].Sids?.length; j++) {
                 let sid = trucks[i].TrailerID + renderLocation(trucks[i].Sids[j].cisco)
                 let row = []
                 row.push(sid)

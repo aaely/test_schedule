@@ -300,7 +300,7 @@ io.on('connection', socket => {
     console.log(socket.id)
 
     socket.on('hot-trailer', data => {
-      socket.broadcast.emit('broadcast', {
+      io.emit('broadcast', {
         event: 'HOT_TRAILER',
         trailer: data.trailer
       })
@@ -308,7 +308,7 @@ io.on('connection', socket => {
 
     socket.on('trailer-arrived', data => {
       console.log(data)
-      socket.broadcast.emit('broadcast', {
+      io.emit('broadcast', {
         event: 'TRAILER_ARRIVED',
         trailer: data.trailer,
         time: data.time
@@ -317,7 +317,7 @@ io.on('connection', socket => {
 
     socket.on('door-assigned', data => {
       console.log(data)
-      socket.broadcast.emit('broadcast', {
+      io.emit('broadcast', {
         event: 'ASSIGN_DOOR',
         trailer: data.trailer,
         door: data.door
@@ -326,7 +326,7 @@ io.on('connection', socket => {
 
     socket.on('trailer-scheduled', data => {
       console.log(data)
-      socket.broadcast.emit('broadcast', {
+      io.emit('broadcast', {
         event: 'TRAILER_SCHEDULED',
         trailer: data.trailer,
         lfd: data.lfd,
