@@ -70,9 +70,44 @@ app.post('/api/trailers', async (req, res) => {
   }
 });
 
+app.post('/api/expedite', async (req, res) => {
+  const session = driver.session({ database: 'trucks' });
+  console.log(req.body)
+  try {
+    const result = await session.run(`
+      MATCH (counter:ExpediteCounter)
+      SET counter.count = counter.count + 1
+      WITH counter.count AS newCount
+      CREATE (trailer:Trailer {id: 'EXPEDITE' + newCount})
+      CREATE (schedule:Schedule {
+          RequestDate: '${req.body.Date}',
+          ScheduleDate: '${req.body.Date}',
+          ScheduleTime: '${req.body.ArrivalTime}',
+          CarrierCode: '',
+          PlantCode: '',
+          ArrivalTime: '${req.body.ArrivalTime}',
+          DoorNumber: '2',
+          Email: '',
+          LoadStatus: 'unloaded',
+          IsHot: false
+      })
+      CREATE (trailer)-[:HAS_SCHEDULE]->(schedule)
+      RETURN trailer.id AS TrailerID, schedule
+    `);
+    const TrailerID = result.records[0].get('TrailerID');
+    const Schedule = result.records[0].get('schedule').properties;
+    res.json({ TrailerID, Schedule });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  } finally {
+    await session.close();
+  }
+});
+
 app.get('/api/schedule_trailer', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: 'neo4j',
   })
   try {
     const result = await session.run(`
@@ -98,7 +133,7 @@ app.get('/api/schedule_trailer', async (req, res) => {
 
 app.post('/api/hot_trailer', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: 'neo4j',
   })
   try {
     const result = await session.run(`
@@ -106,8 +141,7 @@ app.post('/api/hot_trailer', async (req, res) => {
     WHERE trailer.id = "${req.body.param}"
     SET s.IsHot = NOT s.IsHot  
     RETURN trailer, s
-    `
-  );
+    `);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -118,7 +152,7 @@ app.post('/api/hot_trailer', async (req, res) => {
 
 app.post('/api/set_door', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: 'neo4j',
   })
   try {
     const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
@@ -136,7 +170,7 @@ app.post('/api/set_door', async (req, res) => {
 
 app.post('/api/set_arrivalTime', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: 'neo4j',
   })
   try {
     const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
@@ -154,7 +188,7 @@ app.post('/api/set_arrivalTime', async (req, res) => {
 
 app.post('/api/set_schedule', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: 'neo4j',
   })
   try {
     const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
@@ -166,9 +200,6 @@ app.post('/api/set_schedule', async (req, res) => {
     SET s.LastFreeDate = "${req.body.LastFreeDate}"
     RETURN trailer, s`
   );
-  console.log(result.records.map(record=> ({
-    Schedule: record.get('s').properties
-  })))
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -179,7 +210,7 @@ app.post('/api/set_schedule', async (req, res) => {
 
 app.post('/api/get_cisco', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: 'neo4j',
   })
   try {
     const result = await session.run(`
@@ -198,7 +229,7 @@ app.post('/api/get_cisco', async (req, res) => {
 
 app.post('/api/get_load_info', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: 'neo4j',
   })
   try {
     const result = await session.run(`
@@ -209,7 +240,6 @@ app.post('/api/get_load_info', async (req, res) => {
       Sids: record.get('sid').properties,
       Parts: record.get('parts')
     }));
-    console.log(data)
     res.send(data);
   } catch (error) {
     console.error(error);
@@ -231,10 +261,9 @@ app.post('/api/send_email', async (req, res) => {
 
 app.post('/api/todays_trucks', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: 'neo4j',
   })
   try {
-    console.log(req.body)
     const result = await session.run(`
     MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
     WHERE s.ScheduleDate = '${req.body.date}'
@@ -255,10 +284,9 @@ app.post('/api/todays_trucks', async (req, res) => {
 
 app.post('/api/trucks_date_range', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: 'neo4j',
   })
   try {
-    console.log(req.body)
     const result = await session.run(`
     MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
     WHERE s.ScheduleDate >= '${req.body.startDate}' and s.ScheduleDate <= '${req.body.endDate}'

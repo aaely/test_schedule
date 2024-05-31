@@ -79,7 +79,12 @@ function ScheduleTruckForm() {
             ScheduleTime: scheduledTime,
             Carrier: scac
         }
-        recentTrucks.push(next)
+        const index = recentTrucks.findIndex((x: any) => x.TrailerID === currentTruck.TrailerID)
+        if (index < 0) {
+            recentTrucks.push(next)
+        } else {
+            recentTrucks.splice(index, 1, next)
+        }
         setR(recentTrucks)
         trailerScheduled(
             currentTruck.TrailerID,

@@ -2,12 +2,12 @@ import React, { useEffect } from 'react'
 import { useSignal } from '@preact/signals-react'
 import { currentTruck, trucks } from '../Recoil/trucks'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
-import { Button } from 'react-bootstrap'
 import { getTrucksByDate } from '../queries/get_trucks_by_date'
 import { currentView, lastPage } from '../Recoil/router'
 import '../Components/CSS/MyTable.css'
 import axios from 'axios'
 import { trailerArrived } from '../socket'
+import {Button} from 'react-bootstrap'
 
 function TodaysSchedule() {
     
@@ -15,6 +15,7 @@ function TodaysSchedule() {
     const setCurrentTruck = useSetRecoilState(currentTruck)
     const [trks, setTrucks] = useRecoilState(trucks)
     const [last, setLast] = useRecoilState(lastPage)
+    const currentDate = new Date(Date.now()).toLocaleDateString();
 
     useEffect(() => {
         (async() => {
@@ -56,7 +57,6 @@ function TodaysSchedule() {
 
     const updateView = (tr: any, screen: string) => {
         setLast(view)
-        console.log(last)
         setView(screen)
         setCurrentTruck(tr)
     }
@@ -81,12 +81,12 @@ function TodaysSchedule() {
             TrailerID: trl,
             ArrivalTime: now
           }
-          const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}/api/set_arrivalTime`, {params})
+          const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_arrivalTime`, {params})
         } catch(error) {
           console.log(error)
         }
     }
-    
+
     const renderTrucks = () => {
         return trks?.map((tr: any, index: number) => {
         return(
@@ -95,7 +95,7 @@ function TodaysSchedule() {
                 <td>{tr.Schedule.RequestDate}</td>
                 <td><a onClick={() => updateView(tr, 'loadDetails')}>{tr.TrailerID}</a></td>
                 <td>{tr.Schedule.CarrierCode}</td>
-                <td>{renderLocations(tr.CiscoIDs)}</td>
+                <td>{tr.CiscoIDs.length > 0 && renderLocations(tr.CiscoIDs)}</td>
                 <td>{tr.Schedule.LastFreeDate}</td>
                 <td>{tr.Schedule.ScheduleDate}</td>
                 <td>{tr.Schedule.ScheduleTime}</td>
