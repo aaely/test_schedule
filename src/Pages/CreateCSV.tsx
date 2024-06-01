@@ -33,9 +33,6 @@ function CreateCSV() {
                 console.log(error)
             }
         })()
-        return () => {
-            console.log('unmount')
-        }
     }, [])
 
     const updateView = (screen: string) => {

@@ -9,17 +9,17 @@ const { persistAtom } = recoilPersist({
 export const currentView = atom<string>({
     key: 'currentView',
     default: 'landing',
-    effects_UNSTABLE: [persistAtom]
+    effects: [persistAtom]
 })
 
 export const navToggle = atom<boolean>({
   key: 'navToggle',
   default: false,
-  effects_UNSTABLE: [persistAtom]
+  effects: [persistAtom]
 })
 
 export const lastPage = atom<string>({
   key: 'lastPage',
   default: 'landing',
-  effects_UNSTABLE: [persistAtom]
+  effects: [persistAtom]
 })

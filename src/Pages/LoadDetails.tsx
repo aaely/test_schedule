@@ -30,7 +30,6 @@ function LoadDetails() {
                 const res = await get_load_info(currentTruck.TrailerID)
                 res.sort((a: any, b: any) => a.Sids.ciscoID - b.Sids.ciscoID)
                 setL(res)
-                console.log(l)
             } catch(error) {
                 console.log(error)
             }

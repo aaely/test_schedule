@@ -20,26 +20,18 @@ export const trucks = atom({
     effects: [persistAtom]
 })
 
-export const currentTruck = atom({
-    key: 'currentTruck',
+export const datedTrucks = atom({
+    key: 'datedTrucks',
     default: [],
     dangerouslyAllowMutability: true,
     effects: [persistAtom]
 })
 
-export const getCiscos = selector({
-    key: 'getCiscos',
-    get: async ({get}) => {
-        try {
-            get(update)
-            const tr = get(currentTruck)
-            const res = await axios.post('http://192.168.4.70:5555/api/get_cisco', {param: tr.TrailerID})
-            console.log('Response:', res.data)
-            return res.data
-        } catch (error) {
-            console.log(error)
-        }
-    }
+export const currentTruck = atom({
+    key: 'currentTruck',
+    default: [],
+    dangerouslyAllowMutability: true,
+    effects: [persistAtom]
 })
 
 export const recent = atom({

@@ -13,10 +13,12 @@ sgMail.setApiKey(process.env.SEDGRID_API_KEY)
 
 let driver
 
+const target = "trucks";
+
 (async() => { 
 
   try {
-    driver = neo4j.driver('neo4j://localhost:7687', neo4j.auth.basic('neo4j', 'Asdf123$'), { database: 'trucks' });
+    driver = neo4j.driver('bolt://localhost:7687', neo4j.auth.basic('neo4j', 'Asdf123$'), { database: 'trucks' });
     const ServerInfo = await driver.getServerInfo()
     console.log(ServerInfo)
     console.log('connected')
@@ -31,7 +33,7 @@ let driver
 // ***************************
 
 const express = require('express')
-
+console.log(process.env.DB)
 const app = express()
 app.use(cors())
 app.use(bodyParser.json());
@@ -42,7 +44,7 @@ app.listen(5555, () => {
 
 app.post('/api/trailers', async (req, res) => {
   const session = driver.session({
-    database: 'trucks',
+    database: target,
   })
   try {
     const result = await session.run(`
@@ -50,7 +52,6 @@ app.post('/api/trailers', async (req, res) => {
     MATCH (trailer)-[:HAS_SID]->(sid:SID)-[:HAS_PART]->(part:Part)
     RETURN trailer.id AS TrailerID, COLLECT({sid: sid.id, cisco: sid.ciscoID, partNumber: part.number, quantity: part.quantity}) AS SidsAndParts
     `);
-    console.log(result.records)
     const data = result.records.map(record => ({
       TrailerID: record.get('TrailerID'),
       Sids: record.get('SidsAndParts').map(sp => ({
@@ -66,13 +67,16 @@ app.post('/api/trailers', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
     console.log(session)
   } finally {
-    await session.close();
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 });
 
 app.post('/api/expedite', async (req, res) => {
-  const session = driver.session({ database: 'trucks' });
-  console.log(req.body)
+  const session = driver.session({ database: target });
   try {
     const result = await session.run(`
       MATCH (counter:ExpediteCounter)
@@ -101,13 +105,17 @@ app.post('/api/expedite', async (req, res) => {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   } finally {
-    await session.close();
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 });
 
 app.get('/api/schedule_trailer', async (req, res) => {
   const session = driver.session({
-    database: 'neo4j',
+    database: target,
   })
   try {
     const result = await session.run(`
@@ -127,13 +135,17 @@ app.get('/api/schedule_trailer', async (req, res) => {
     res.status(500).json({ error: 'Internal Server Error' });
     console.log(session)
   } finally {
-    await session.close();
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 });
 
 app.post('/api/hot_trailer', async (req, res) => {
   const session = driver.session({
-    database: 'neo4j',
+    database: target,
   })
   try {
     const result = await session.run(`
@@ -142,42 +154,67 @@ app.post('/api/hot_trailer', async (req, res) => {
     SET s.IsHot = NOT s.IsHot  
     RETURN trailer, s
     `);
+    const data = result.records.map(record => ({
+      TrailerID: record.get('trailer'),
+      Schedule: record.get('s')
+    }))
+    res.send(data)
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   } finally {
-    await session.close();
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 });
 
 app.post('/api/set_door', async (req, res) => {
   const session = driver.session({
-    database: 'neo4j',
+    database: target,
   })
   try {
-    const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
+    const result = await session.run(`
+    MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
     WHERE trailer.id = "${req.body.TrailerID}"
     SET s.DoorNumber = "${req.body.Door}"
     RETURN trailer, s`
   );
+  const data = result.records.map(record => ({
+    TrailerID: record.get('trailer'),
+    Schedule: record.get('s')
+  }))
+  res.send(data)
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   } finally {
-    await session.close();
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 });
 
 app.post('/api/set_arrivalTime', async (req, res) => {
   const session = driver.session({
-    database: 'neo4j',
+    database: target,
   })
   try {
-    const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
+    const result = await session.run(`
+    MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
     WHERE trailer.id = "${req.body.params.TrailerID}"
     SET s.ArrivalTime = "${req.body.params.ArrivalTime}"
     RETURN trailer, s`
-  );
+    );
+    const data = result.records.map(record => ({
+      TrailerID: record.get('trailer'),
+      Schedule: record.get('s')
+    }))
+    res.send(data)
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
@@ -188,7 +225,7 @@ app.post('/api/set_arrivalTime', async (req, res) => {
 
 app.post('/api/set_schedule', async (req, res) => {
   const session = driver.session({
-    database: 'neo4j',
+    database: target,
   })
   try {
     const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
@@ -200,17 +237,27 @@ app.post('/api/set_schedule', async (req, res) => {
     SET s.LastFreeDate = "${req.body.LastFreeDate}"
     RETURN trailer, s`
   );
+  const data = result.records.map(record => ({
+    TrailerID: record.get('trailer'),
+    Schedule: record.get('s')
+  }))
+  console.log(data)
+  res.send(data)
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   } finally {
-    await session.close();
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 });
 
 app.post('/api/get_cisco', async (req, res) => {
   const session = driver.session({
-    database: 'neo4j',
+    database: target,
   })
   try {
     const result = await session.run(`
@@ -223,13 +270,17 @@ app.post('/api/get_cisco', async (req, res) => {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   } finally {
-    await session.close();
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 })
 
 app.post('/api/get_load_info', async (req, res) => {
   const session = driver.session({
-    database: 'neo4j',
+    database: target,
   })
   try {
     const result = await session.run(`
@@ -245,7 +296,11 @@ app.post('/api/get_load_info', async (req, res) => {
     console.error(error);
     res.status(500).json({ error: 'Internal Server Error' });
   } finally {
-    await session.close();
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 })
 
@@ -261,7 +316,7 @@ app.post('/api/send_email', async (req, res) => {
 
 app.post('/api/todays_trucks', async (req, res) => {
   const session = driver.session({
-    database: 'neo4j',
+    database: target,
   })
   try {
     const result = await session.run(`
@@ -279,12 +334,18 @@ app.post('/api/todays_trucks', async (req, res) => {
     res.send(data)
   } catch(error) {
     console.log(error)
+  } finally {
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 }) 
 
 app.post('/api/trucks_date_range', async (req, res) => {
   const session = driver.session({
-    database: 'neo4j',
+    database: target,
   })
   try {
     const result = await session.run(`
@@ -302,6 +363,12 @@ app.post('/api/trucks_date_range', async (req, res) => {
     res.send(data)
   } catch(error) {
     console.log(error)
+  } finally {
+    try {
+      await session.close();
+    } catch(error) {
+      console.log(error)
+    }
   }
 }) 
 
@@ -312,7 +379,7 @@ app.post('/api/trucks_date_range', async (req, res) => {
 const socket = require('socket.io')
 const PORT = 3030;
 const server = app.listen(PORT, () => {
-    console.log(`Server is listening on ${PORT}`)
+  console.log(`Server is listening on ${PORT}`)
 })
 
 const io = socket(server, {
@@ -322,12 +389,23 @@ const io = socket(server, {
     },
 })
 
+/*const session = driver.session({
+  database: 'trucks',
+})*/
 
 io.on('connection', socket => {
     socket.emit('connection', null)
     console.log(socket.id)
 
-    socket.on('hot-trailer', data => {
+    socket.on('hot-trailer', async (data) => {
+      try {
+
+      } catch(error) {
+        console.error(error.message)
+        socket.emit('')
+      }
+      const { trailer } = data
+
       io.emit('broadcast', {
         event: 'HOT_TRAILER',
         trailer: data.trailer

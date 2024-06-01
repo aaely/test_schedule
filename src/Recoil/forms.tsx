@@ -3,7 +3,7 @@ import { recoilPersist } from "recoil-persist";
 
 const { persistAtom } = recoilPersist({
     key: 'recoil-persist-session', // this key is using to store data in local storage
-    storage: sessionStorage, // configurate which stroage will be used to store the data
+    storage: localStorage, // configurate which stroage will be used to store the data
   })
 
 export const chat = atom<string>({

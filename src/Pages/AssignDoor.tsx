@@ -42,7 +42,8 @@ function AssignDoor() {
                 TrailerID: truck.TrailerID,
                 Door: d
             }
-            await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_door`, params)
+            const res= await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_door`, params)
+            console.log(res)
         } catch(error) {
             console.log(error)
         }
