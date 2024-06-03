@@ -228,15 +228,17 @@ app.post('/api/set_schedule', async (req, res) => {
     database: target,
   })
   try {
-    const result = await session.run(`MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
+    const result = await session.run(`
+    MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
     WHERE trailer.id = "${req.body.TrailerID}"
     SET s.ScheduleDate = "${req.body.ScheduledDate}"
     SET s.RequestDate = "${req.body.RequestDate}"
     SET s.CarrierCode = "${req.body.CarrierCode}"
     SET s.ScheduleTime = "${req.body.ScheduleTime}"
     SET s.LastFreeDate = "${req.body.LastFreeDate}"
-    RETURN trailer, s`
-  );
+    SET s.ContactEmail = "${req.body.ContactEmail}"
+    RETURN trailer, s
+    `);
   const data = result.records.map(record => ({
     TrailerID: record.get('trailer'),
     Schedule: record.get('s')

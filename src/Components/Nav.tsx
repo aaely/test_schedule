@@ -21,20 +21,20 @@ export default function Nav() {
                     color: 'limegreen',
                     flexWrap: 'wrap'}}
                     >
-            <div>
-                <a onClick={() => setView('landing')}>All Trucks</a>
+            <div onClick={() => setView('landing')}>
+                <a>All Trucks</a>
             </div>
-            <div>
-                <a onClick={() => setView('recentTrucks')}>Recently Scheduled</a>
+            <div onClick={() => setView('recentTrucks')}>
+                <a>Recently Scheduled</a>
             </div>
-            <div>
-                <a onClick={() => setView('trucksByDate')}>Trucks By Date Range</a>
+            <div onClick={() => setView('trucksByDate')}>
+                <a>Trucks By Date Range</a>
             </div>
-            <div>
-                <a onClick={() => setView('todaysSchedule')}>Today's Schedule</a>
+            <div onClick={() => setView('todaysSchedule')}>
+                <a>Today's Schedule</a>
             </div>
-            <div>
-                <a onClick={() => setView('createCsv')}>CSV</a>
+            <div onClick={() => setView('createCsv')}>
+                <a>CSV</a>
             </div>
         </div>
         </div>

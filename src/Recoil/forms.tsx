@@ -12,12 +12,18 @@ export const chat = atom<string>({
     effects: [persistAtom]
 })
 
-export const door = atom<string>({
-    key: 'door',
-    default: '',
+export const truckForm = atom({
+    key: 'truckForm',
+    default: {
+        door: '',
+        contactEmail: '',
+        scheduledDate: '',
+        scheduledTime: '',
+        lastFreeDate: '',
+        scac: '',
+    },
     effects: [persistAtom]
 })
-
 
 export const user = atom<string>({
     key: 'user',
@@ -30,34 +36,3 @@ export const messages = atom({
     default: [],
     effects: [persistAtom]
 })
-
-export const contactEmail = atom({
-    key: 'contactEmail',
-    default: '',
-    effects: [persistAtom]
-})
-
-export const scheduledDate = atom({
-    key: 'scheduledDate',
-    default: '',
-    effects: [persistAtom]
-})
-
-export const scheduledTime = atom({
-    key: 'scheduledTime',
-    default: '',
-    effects: [persistAtom]
-})
-
-export const lastFreeDate = atom({
-    key: 'lastFreeDate',
-    default: '',
-    effects: [persistAtom]
-})
-
-export const scac = atom({
-    key: 'scac',
-    default: '',
-    effects: [persistAtom]
-})
-

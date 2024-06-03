@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react'
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
+import { useRecoilState } from 'recoil'
 import { currentTruck as t } from '../Recoil/trucks'
 import { currentView, lastPage } from '../Recoil/router';
-import { scac as s, scheduledDate as sd, lastFreeDate as fd, scheduledTime as st, contactEmail} from '../Recoil/forms';
+import { truckForm } from '../Recoil/forms';
 import './CSS/EditTrailer.css'
 import Button from '@mui/material/Button'
 import { Box } from '@mui/material';
@@ -21,35 +21,17 @@ import { trailerScheduled } from '../socket';
 function ScheduleTruckForm() {
     const [currentTruck, setCurrentTruck] = useRecoilState(t)
     const currentDate = new Date(Date.now()).toLocaleDateString();
-    const [scac, setScac] = useRecoilState(s)
-    const [scheduledDate, setScheduledDate] = useRecoilState(sd)
-    const [lastFreeDate, setLastFreeDate] = useRecoilState(fd)
-    const [scheduledTime, setScheduledTime] = useRecoilState(st)
     const [r, setR] = useRecoilState(recent)
-    const [ce, setCe] = useRecoilState(contactEmail)
     //const formattedDate = `${(currentDate.getMonth() + 1).toString().padStart(2, '0')}/${currentDate.getDate().toString().padStart(2, '0')}/${currentDate.getFullYear()}`;
     const [view, setView] = useRecoilState(currentView)
     const [last, setLast] = useRecoilState(lastPage)
+    const [form, setForm] = useRecoilState(truckForm)
 
     const handleChange = ({target: { id, value}}: any) => {
-        switch(id) {
-            case 'scac':
-                setScac(value)
-                break;
-            case 'scheduledDate': 
-                setScheduledDate(value)
-                break;
-            case 'lastFreeDate':
-                setLastFreeDate(value)
-                break;
-            case 'scheduledTime':
-                setScheduledTime(value)
-                break;
-            case 'contactEmail':
-                setCe(value)
-                break;
-            default: break;
-        }
+        setForm({
+            ...form,
+            [id]: value
+        })
     }
 
     const updateView = (screen: string) => {
@@ -58,26 +40,23 @@ function ScheduleTruckForm() {
     }
 
     useEffect(() => {
-        if(currentTruck.Schedule.CarrierCode.length > 1) {
-            setScac(currentTruck.Schedule.CarrierCode)
-        }
-        setScheduledDate(currentTruck.Schedule.ScheduleDate)
-        setLastFreeDate(currentTruck.Schedule.LastFreeDate)
-        setScheduledTime(currentTruck.Schedule.ScheduleTime)
-        if(currentTruck.Schedule.ContactEmail?.length > 0) {
-            setCe(currentTruck.Schedule.ContactEmail)
-        }
+        setForm({
+            ...form, 
+            scheduledDate: currentTruck.Schedule.ScheduleDate,
+            lastFreeDate: currentTruck.Schedule.LastFreeDate,
+            scheduledTime: currentTruck.Schedule.ScheduleTime,
+            contactEmail: currentTruck.Schedule.ContactEmail,
+            scac: currentTruck.Schedule.CarrierCode
+        })
     }, [])
 
     const setDetails = async () => {
-        setLast(view)
-        setView('landing')
         const recentTrucks = [...r]
         const next = {
             TrailerID: currentTruck.TrailerID,
-            ScheduleDate: scheduledDate,
-            ScheduleTime: scheduledTime,
-            Carrier: scac
+            ScheduleDate: form.scheduledDate,
+            ScheduleTime: form.scheduledTime,
+            Carrier: form.scac
         }
         const index = recentTrucks.findIndex((x: any) => x.TrailerID === currentTruck.TrailerID)
         if (index < 0) {
@@ -89,21 +68,22 @@ function ScheduleTruckForm() {
         trailerScheduled(
             currentTruck.TrailerID,
             'TRAILER_SCHEDULED',
-            lastFreeDate,
-            scheduledDate,
-            scheduledTime,
-            scac,
+            form.lastFreeDate,
+            form.scheduledDate,
+            form.scheduledTime,
+            form.scac,
             currentDate
         )
+        setTimeout(() => {setView(last)}, 200)
         try {
             const params = {
                 TrailerID: currentTruck.TrailerID,
-                ScheduleTime: scheduledTime,
-                ScheduledDate: scheduledDate,
+                ScheduleTime: form.scheduledTime,
+                ScheduledDate: form.scheduledDate,
                 RequestDate: currentDate,
-                LastFreeDate: lastFreeDate,
-                CarrierCode: scac,
-                ContactEmail: ce,
+                LastFreeDate: form.lastFreeDate,
+                CarrierCode: form.scac,
+                ContactEmail: form.contactEmail,
             }
             const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_schedule`, params)
             console.log(res)
@@ -120,7 +100,7 @@ function ScheduleTruckForm() {
                 <Input
                 id='scac'
                 type='text'
-                value={scac}
+                value={form.scac}
                 onChange={handleChange}
                 placeholder='UNIV'
                 startAdornment={
@@ -135,7 +115,7 @@ function ScheduleTruckForm() {
                 <Input
                 id='lastFreeDate'
                 type='date'
-                value={lastFreeDate}
+                value={form.lastFreeDate}
                 onChange={handleChange}
                 startAdornment={
                     <InputAdornment position='start'>
@@ -149,7 +129,7 @@ function ScheduleTruckForm() {
                 <Input
                 id='scheduledDate'
                 type='date'
-                value={scheduledDate}
+                value={form.scheduledDate}
                 onChange={handleChange}
                 startAdornment={
                     <InputAdornment position='start'>
@@ -163,7 +143,7 @@ function ScheduleTruckForm() {
                 <Input
                 id='scheduledTime'
                 type='text'
-                value={scheduledTime}
+                value={form.scheduledTime}
                 onChange={handleChange}
                 placeholder='7:00'
                 startAdornment={
@@ -178,7 +158,7 @@ function ScheduleTruckForm() {
                 <Input
                 id='contactEmail'
                 type='text'
-                value={ce}
+                value={form.contactEmail}
                 onChange={handleChange}
                 placeholder='example@gmail.com'
                 startAdornment={
