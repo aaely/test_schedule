@@ -8,6 +8,7 @@ import '../Components/CSS/MyTable.css'
 import axios from 'axios'
 import { trailerArrived } from '../socket'
 import {Button} from 'react-bootstrap'
+import { role } from '../Recoil/user';
 
 function TodaysSchedule() {
     
@@ -16,6 +17,7 @@ function TodaysSchedule() {
     const [trks, setTrucks] = useRecoilState(trucks)
     const [last, setLast] = useRecoilState(lastPage)
     const currentDate = new Date(Date.now()).toLocaleDateString();
+    const myRole = useRecoilValue(role)
 
     useEffect(() => {
         (async() => {
@@ -99,10 +101,9 @@ function TodaysSchedule() {
                 <td>{tr.Schedule.LastFreeDate}</td>
                 <td>{tr.Schedule.ScheduleDate}</td>
                 <td>{tr.Schedule.ScheduleTime}</td>
-                <td>{tr.Schedule.ArrivalTime.length === 0 && tr.Schedule.ScheduleDate.length > 0 ? <Button variant='success' onClick={() => Arrived(tr.TrailerID)}>Check In</Button> : tr.Schedule.ArrivalTime}</td>
-                <td>{tr.Schedule.DoorNumber.length < 1 ? <Button color='success' onClick={() => updateView(tr, 'assignDoor')}>Assign Door</Button> : <a onClick={() => updateView(tr, 'assignDoor')}>{tr.Schedule.DoorNumber}</a>}</td>
-                
-                <td><Button color='success' onClick={() => updateView(tr, 'editTrailer')}>Edit</Button></td>
+                <td>{tr.Schedule.ArrivalTime.length === 0 && tr.Schedule.ScheduleDate.length > 0 && myRole === 'write' ? <Button variant='success' onClick={() => Arrived(tr.TrailerID)}>Check In</Button> : tr.Schedule.ArrivalTime}</td>
+                <td>{tr.Schedule.DoorNumber.length < 1 && myRole === 'write' ? <Button color='success' onClick={() => updateView(tr, 'assignDoor')}>Assign Door</Button> : <a onClick={() => updateView(tr, 'assignDoor')}>{tr.Schedule.DoorNumber}</a>}</td>
+                <td>{myRole === 'write' && <Button color='success' onClick={() => updateView(tr, 'editTrailer')}>Edit</Button>}</td>
             </tr>          
         )
         });

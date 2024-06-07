@@ -6,6 +6,8 @@ const neo4j = require('neo4j-driver');
 const cors = require('cors')
 const sgMail = require('@sendgrid/mail')
 sgMail.setApiKey(process.env.SEDGRID_API_KEY)
+const bcrypt = require('bcryptjs')
+const jwt = require('jsonwebtoken')
 
 // ****************************
 //   Neo4j connection driver
@@ -27,7 +29,6 @@ const target = "trucks";
   }
 })()
 
-
 // ***************************
 // Express endpoint services
 // ***************************
@@ -41,6 +42,64 @@ app.use(bodyParser.json());
 app.listen(5555, () => {
   console.log('server is listening on :5555')
 })
+
+const JWT_SECRET = 'tO7E8uCjD5rXpQl0FhKwV2yMz4bJnAi9sGeR3kTzXvNmPuLsDq8W';
+
+// Registration Route
+app.post('/register', async (req, res) => {
+
+    const session = driver.session({
+      database: target,
+    })
+
+    const { username, password } = req.body;
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    try {
+        await session.run(
+            `CREATE (u:User {name: $username, password: $password, role: 'read'})`,
+            { username, password: hashedPassword }
+        );
+
+        res.status(201).send('User registered');
+    } catch (error) {
+        console.log(error)
+        res.status(500).send('Error registering user');
+    } finally {
+      session.close()
+    }
+});
+
+// Login Route
+app.post('/login', async (req, res) => {
+
+    const session = driver.session({
+      database: target,
+    })
+    const { username, password } = req.body;
+
+    const result = await session.run(
+        'MATCH (u:User {name: $username}) RETURN u',
+        { username }
+    );
+
+    if (result.records.length === 0) {
+        return res.status(400).send('User not found');
+    }
+
+    const user = result.records[0].get('u').properties;
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+
+    if (!isPasswordValid) {
+        return res.status(400).send('Invalid password');
+    }
+
+    const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    res.status(200).send({ token, user });
+
+    await session.close()
+});
 
 app.post('/api/trailers', async (req, res) => {
   const session = driver.session({
@@ -373,6 +432,33 @@ app.post('/api/trucks_date_range', async (req, res) => {
     }
   }
 }) 
+
+//***************************
+// Middleware to Verify Token
+//***************************
+
+
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) return res.sendStatus(403);
+      req.user = user;
+      next();
+  });
+};
+
+const authorizeRoles = (requiredRoles) => {
+  return (req, res, next) => {
+      const { roles } = req.user;
+      if (requiredRoles.some(role => roles.includes(role))) {
+          next();
+      } else {
+          res.sendStatus(403);
+      }
+  };
+};
 
 // **********************
 // SocketIO Services

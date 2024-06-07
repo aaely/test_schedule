@@ -12,6 +12,7 @@ import { SiCheckmarx } from 'react-icons/si'
 import { FaDollarSign } from 'react-icons/fa'
 import { getTrucksByDateRange } from '../queries/get_trucks_date_range'
 import { trailerArrived } from '../socket'
+import { role } from '../Recoil/user';
 
 function TrucksByDate() {
     
@@ -21,6 +22,7 @@ function TrucksByDate() {
     const [last, setLast] = useRecoilState(lastPage)
     const [date, setDate] = useRecoilState(date1)
     const [d2, setDate2] = useRecoilState(date2)
+    const myRole = useRecoilValue(role)
 
     const getTrucks = async () => {
         try {
@@ -102,10 +104,10 @@ function TrucksByDate() {
                     <td>{tr.Schedule.LastFreeDate}</td>
                     <td>{tr.Schedule.ScheduleDate}</td>
                     <td>{tr.Schedule.ScheduleTime}</td>
-                    <td>{tr.Schedule.ArrivalTime.length === 0 && tr.Schedule.ScheduleDate.length > 0 ? <Button variant='success' onClick={() => Arrived(tr.TrailerID)}>Check In</Button> : tr.Schedule.ArrivalTime}</td>
-                    <td>{tr.Schedule.DoorNumber.length < 1 ? <Button color='success' onClick={() => updateView(tr, 'assignDoor')}>Assign Door</Button> : <a onClick={() => updateView(tr, 'assignDoor')}>{tr.Schedule.DoorNumber}</a>}</td>
+                    <td>{tr.Schedule.ArrivalTime.length === 0 && tr.Schedule.ScheduleDate.length > 0 && myRole === 'write' ? <Button variant='success' onClick={() => Arrived(tr.TrailerID)}>Check In</Button> : tr.Schedule.ArrivalTime}</td>
+                    <td>{tr.Schedule.DoorNumber.length < 1 && myRole === 'write' ? <Button color='success' onClick={() => updateView(tr, 'assignDoor')}>Assign Door</Button> : <a onClick={() => updateView(tr, 'assignDoor')}>{tr.Schedule.DoorNumber}</a>}</td>
                     
-                    <td><Button color='success' onClick={() => updateView(tr, 'editTrailer')}>Edit</Button></td>
+                    <td>{myRole === 'write' && <Button color='success' onClick={() => updateView(tr, 'editTrailer')}>Edit</Button>}</td>
                 </tr>          
             )
         });

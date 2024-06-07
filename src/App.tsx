@@ -12,6 +12,8 @@ import RecentTrucks from './Pages/RecentTrucks';
 import TodaysSchedule from './Pages/TodaysSchedule'
 import TrucksByDate from './Pages/TrucksByDate'
 import CreateCSV from './Pages/CreateCSV';
+import { token } from './Recoil/user';
+import Login from './Pages/Login';
 
 
 const hashMap = new Map([
@@ -28,6 +30,7 @@ const hashMap = new Map([
 function App() {
 
   const view: string = useRecoilValue(currentView)
+  const tkn = useRecoilValue(token)
 
   useWebSocket()
 
@@ -40,10 +43,13 @@ function App() {
   return transition((style, i) => {
     return (
       <div style={{position: 'absolute', width: '100vw', height: '100vh'}}>
-        <Nav />
-        <animated.div style={style}>
-          {hashMap.get(i)}
-        </animated.div>
+        {tkn.length > 0 ? 
+        <><Nav /><animated.div style={style}>
+            {hashMap.get(i)}
+          </animated.div></>
+        :
+        <Login />
+        }
       </div>
     )
   })

@@ -1,12 +1,13 @@
 /* eslint-disable jsx-a11y/anchor-is-valid */
 import React, { useEffect, useState } from 'react'
-import { useRecoilState, useSetRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { trucks as trk, currentTruck as ct } from '../Recoil/trucks'
 import { currentView, lastPage } from '../Recoil/router'
 import { Button } from 'react-bootstrap'
 import { updateTrailer, trailerArrived } from '../socket'
 import axios from 'axios'
 import { getTrucks } from '../queries/getTrucks'
+import { role } from '../Recoil/user';
 import './CSS/MyTable.css'
 
 
@@ -15,6 +16,7 @@ export default function MyTable() {
   const [view, setView] = useRecoilState(currentView)
   const setCurrentTruck = useSetRecoilState(ct)
   const last = useSetRecoilState(lastPage)
+  const myRole = useRecoilValue(role)
 
   const updateView = (tr: any, screen: string) => {
     last(view)
@@ -93,10 +95,10 @@ export default function MyTable() {
               <td>{tr.Schedule.LastFreeDate}</td>
               <td>{tr.Schedule.ScheduleDate}</td>
               <td>{tr.Schedule.ScheduleTime}</td>
-              <td>{tr.Schedule.ArrivalTime.length === 0 && tr.Schedule.ScheduleDate.length > 0 ? <Button variant='success' onClick={() => Arrived(tr.TrailerID)}>Check In</Button> : tr.Schedule.ArrivalTime}</td>
+              <td>{tr.Schedule.ArrivalTime.length === 0 && tr.Schedule.ScheduleDate.length > 0 && myRole === 'write' ? <Button variant='success' onClick={() => Arrived(tr.TrailerID)}>Check In</Button> : tr.Schedule.ArrivalTime}</td>
               <td>{tr.Schedule.DoorNumber}</td>
               <td>{tr.Schedule.IsHot ? <Button variant='success' onClick={() => Hot(tr.TrailerID)}>Mark Not Hot</Button> : <Button variant='danger' onClick={() => Hot(tr.TrailerID)}>Mark Hot</Button>}</td>
-              <td><Button color='success' onClick={() => updateView(tr, 'editTrailer')}>Edit</Button></td>
+              <td>{myRole === 'write' && <Button color='success' onClick={() => updateView(tr, 'editTrailer')}>Edit</Button>}</td>
           </tr>          
         )
       });

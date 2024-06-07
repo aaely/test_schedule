@@ -1,8 +1,8 @@
-import axios from "axios"
+import { api } from "../utils/api"
 
 export const get_csv_data = async (date: string) => {
     try {
-        const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/trailers`, { date })
+        const res = await api.post(`/api/trailers`, { date })
         return res.data
     } catch(error) {
         console.log(error)
