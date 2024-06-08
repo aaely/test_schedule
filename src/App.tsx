@@ -11,7 +11,6 @@ import Nav from './Components/Nav';
 import RecentTrucks from './Pages/RecentTrucks';
 import TodaysSchedule from './Pages/TodaysSchedule'
 import TrucksByDate from './Pages/TrucksByDate'
-import CreateCSV from './Pages/CreateCSV';
 import { token } from './Recoil/user';
 import Login from './Pages/Login';
 
@@ -24,7 +23,6 @@ const hashMap = new Map([
   ['recentTrucks', <RecentTrucks />],
   ['todaysSchedule', <TodaysSchedule />],
   ['trucksByDate', <TrucksByDate />],
-  ['createCsv', <CreateCSV />]
 ]) 
 
 function App() {

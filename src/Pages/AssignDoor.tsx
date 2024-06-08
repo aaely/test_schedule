@@ -8,6 +8,7 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import axios from 'axios';
 import { assignDoor } from '../socket';
 import { SiMoleculer } from 'react-icons/si';
+import { api } from '../utils/api';
 
 function AssignDoor() {
 
@@ -40,7 +41,7 @@ function AssignDoor() {
                 TrailerID: truck.TrailerID,
                 Door: form.door
             }
-            const res= await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_door`, params)
+            const res= await api.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_door`, params)
             console.log(res)
         } catch(error) {
             console.log(error)

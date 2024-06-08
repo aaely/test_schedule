@@ -5,10 +5,10 @@ import { trucks as trk, currentTruck as ct } from '../Recoil/trucks'
 import { currentView, lastPage } from '../Recoil/router'
 import { Button } from 'react-bootstrap'
 import { updateTrailer, trailerArrived } from '../socket'
-import axios from 'axios'
 import { getTrucks } from '../queries/getTrucks'
 import { role } from '../Recoil/user';
 import './CSS/MyTable.css'
+import { api } from '../utils/api'
 
 
 export default function MyTable() {
@@ -44,7 +44,7 @@ export default function MyTable() {
     
     updateTrailer(trl)
     try {
-      const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/hot_trailer`, {param: trl})
+      const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/hot_trailer`, {param: trl})
       console.log(res)
     } catch(error) {
       console.log(error)
@@ -59,7 +59,7 @@ export default function MyTable() {
         TrailerID: trl,
         ArrivalTime: now
       }
-      const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_arrivalTime`, {params})
+      const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_arrivalTime`, {params})
       console.log(res)
     } catch(error) {
       console.log(error)

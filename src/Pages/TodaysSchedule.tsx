@@ -9,6 +9,8 @@ import axios from 'axios'
 import { trailerArrived } from '../socket'
 import {Button} from 'react-bootstrap'
 import { role } from '../Recoil/user';
+import CreateCSV from '../Components/CreateCSV'
+import { CSVLink } from "react-csv";
 
 function TodaysSchedule() {
     
@@ -89,6 +91,27 @@ function TodaysSchedule() {
         }
     }
 
+    const data = () => {
+        let c = []
+        let headers = ['Container ID', 'Request Date', 'SCSC Code', 'Schedule Date', 'Schedule Time', 'Arrival Time', 'Door Number', 'Contact Email']
+        c.push(headers)
+        for(let i = 0; i < trks?.length; i++) {
+            let row = []
+            row.push(trks[i].TrailerID)
+            row.push(trks[i].Schedule.RequestDate)
+            row.push(trks[i].Schedule.CarrierCode)
+            row.push(trks[i].Schedule.ScheduleDate)            
+            row.push(trks[i].Schedule.ScheduleTime)            
+            row.push(trks[i].Schedule.ArrivalTime)            
+            row.push(trks[i].Schedule.DoorNumber)
+            row.push(trks[i].Schedule.ContactEmail)
+            c.push(row)
+        }
+        return c
+    }
+
+    const csv = data()
+
     const renderTrucks = () => {
         return trks?.map((tr: any, index: number) => {
         return(
@@ -112,6 +135,7 @@ function TodaysSchedule() {
     return(
         <div className='container'>
             <h1 style={{textAlign: 'center'}}>Today's Schedule</h1>
+            <CSVLink style={{margin: '3%'}} data={csv} filename='todaysTrucks'>Export to Excel</CSVLink>
             <table>
             <thead>
                 <tr>
@@ -131,6 +155,7 @@ function TodaysSchedule() {
                 {renderTrucks()}
             </tbody>
             </table>
+            <CreateCSV />
         </div>
     )
 }

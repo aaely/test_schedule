@@ -2,10 +2,12 @@ import { MutableRefObject, useRef, useState } from 'react'
 import { useRecoilState, useSetRecoilState } from 'recoil'
 import { currentView } from '../Recoil/router'
 import { recent } from '../Recoil/trucks'
+import { token } from '../Recoil/user'
 
 export default function Nav() {
 
     const setView = useSetRecoilState(currentView)
+    const logout = useSetRecoilState(token)
 
     return (
         <div>
@@ -33,8 +35,8 @@ export default function Nav() {
             <div onClick={() => setView('todaysSchedule')}>
                 <a>Today's Schedule</a>
             </div>
-            <div onClick={() => setView('createCsv')}>
-                <a>CSV</a>
+            <div onClick={() => logout('')}>
+                <a>Logout</a>
             </div>
         </div>
         </div>

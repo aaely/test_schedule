@@ -45,6 +45,41 @@ app.listen(5555, () => {
 
 const JWT_SECRET = 'tO7E8uCjD5rXpQl0FhKwV2yMz4bJnAi9sGeR3kTzXvNmPuLsDq8W';
 
+
+//***************************
+// Middleware to Verify Token
+//***************************
+
+
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.sendStatus(401);
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+      if (err) return res.sendStatus(403);
+      req.user = user;
+      next();
+  });
+};
+
+
+/*******************************
+  Middleware to authorize roles
+********************************/
+
+
+const authorizeRoles = (requiredRoles) => {
+  return (req, res, next) => {
+      const { roles } = req.user;
+      if (requiredRoles.some(role => roles.includes(role))) {
+          next();
+      } else {
+          res.sendStatus(403);
+      }
+  };
+};
+
+
 // Registration Route
 app.post('/register', async (req, res) => {
 
@@ -95,7 +130,7 @@ app.post('/login', async (req, res) => {
         return res.status(400).send('Invalid password');
     }
 
-    const token = jwt.sign({ username: user.username }, JWT_SECRET, { expiresIn: '1h' });
+    const token = jwt.sign({ username: user.username, roles: user.role }, JWT_SECRET, { expiresIn: '1h' });
     res.status(200).send({ token, user });
 
     await session.close()
@@ -230,7 +265,11 @@ app.post('/api/hot_trailer', async (req, res) => {
   }
 });
 
-app.post('/api/set_door', async (req, res) => {
+app.post(
+  '/api/set_door', 
+  authenticateToken,
+  authorizeRoles(['write']),
+  async (req, res) => {
   const session = driver.session({
     database: target,
   })
@@ -258,7 +297,11 @@ app.post('/api/set_door', async (req, res) => {
   }
 });
 
-app.post('/api/set_arrivalTime', async (req, res) => {
+app.post(
+  '/api/set_arrivalTime',
+  authenticateToken,
+  authorizeRoles(['write']),
+  async (req, res) => {
   const session = driver.session({
     database: target,
   })
@@ -282,39 +325,43 @@ app.post('/api/set_arrivalTime', async (req, res) => {
   }
 });
 
-app.post('/api/set_schedule', async (req, res) => {
-  const session = driver.session({
-    database: target,
-  })
-  try {
-    const result = await session.run(`
-    MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
-    WHERE trailer.id = "${req.body.TrailerID}"
-    SET s.ScheduleDate = "${req.body.ScheduledDate}"
-    SET s.RequestDate = "${req.body.RequestDate}"
-    SET s.CarrierCode = "${req.body.CarrierCode}"
-    SET s.ScheduleTime = "${req.body.ScheduleTime}"
-    SET s.LastFreeDate = "${req.body.LastFreeDate}"
-    SET s.ContactEmail = "${req.body.ContactEmail}"
-    RETURN trailer, s
-    `);
-  const data = result.records.map(record => ({
-    TrailerID: record.get('trailer'),
-    Schedule: record.get('s')
-  }))
-  console.log(data)
-  res.send(data)
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal Server Error' });
-  } finally {
+app.post(
+  '/api/set_schedule', 
+  authenticateToken, 
+  authorizeRoles(['write']), 
+  async (req, res) => {
+    const session = driver.session({
+      database: target,
+    })
     try {
-      await session.close();
-    } catch(error) {
-      console.log(error)
+      const result = await session.run(`
+      MATCH (trailer:Trailer)-[:HAS_SCHEDULE]->(s:Schedule)
+      WHERE trailer.id = "${req.body.TrailerID}"
+      SET s.ScheduleDate = "${req.body.ScheduledDate}"
+      SET s.RequestDate = "${req.body.RequestDate}"
+      SET s.CarrierCode = "${req.body.CarrierCode}"
+      SET s.ScheduleTime = "${req.body.ScheduleTime}"
+      SET s.LastFreeDate = "${req.body.LastFreeDate}"
+      SET s.ContactEmail = "${req.body.ContactEmail}"
+      RETURN trailer, s
+      `);
+    const data = result.records.map(record => ({
+      TrailerID: record.get('trailer'),
+      Schedule: record.get('s')
+    }))
+    console.log(data)
+    res.send(data)
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    } finally {
+      try {
+        await session.close();
+      } catch(error) {
+        console.log(error)
+      }
     }
-  }
-});
+  });
 
 app.post('/api/get_cisco', async (req, res) => {
   const session = driver.session({
@@ -433,32 +480,7 @@ app.post('/api/trucks_date_range', async (req, res) => {
   }
 }) 
 
-//***************************
-// Middleware to Verify Token
-//***************************
 
-
-const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) return res.sendStatus(401);
-
-  jwt.verify(token, JWT_SECRET, (err, user) => {
-      if (err) return res.sendStatus(403);
-      req.user = user;
-      next();
-  });
-};
-
-const authorizeRoles = (requiredRoles) => {
-  return (req, res, next) => {
-      const { roles } = req.user;
-      if (requiredRoles.some(role => roles.includes(role))) {
-          next();
-      } else {
-          res.sendStatus(403);
-      }
-  };
-};
 
 // **********************
 // SocketIO Services

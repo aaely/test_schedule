@@ -3,7 +3,7 @@ import { currentTruck as c, loadDetails} from '../Recoil/trucks'
 import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { get_csv_data } from '../queries/get_csv_data'
 import { Box, Button } from '@mui/material'
-import './CSS/EditTrailer.css'
+import '../Pages/CSS/EditTrailer.css'
 import { currentView, lastPage } from '../Recoil/router'
 import { CSVLink } from "react-csv";
 
@@ -79,7 +79,7 @@ function CreateCSV() {
 
     return (
         <Box className='container'>
-            <CSVLink style={{margin: '5%'}} filename='receipt01' data={csv}>Download CSV</CSVLink>
+            <CSVLink style={{margin: '5%'}} filename='receipt01' data={csv}>Download CSV -- Today's Trucks</CSVLink>
             <Button style={{margin: '30px'}} variant='contained' color='error' onClick={() => updateView(last)}>Back</Button>
         </Box>
     )
