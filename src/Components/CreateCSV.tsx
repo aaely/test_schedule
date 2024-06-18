@@ -23,6 +23,13 @@ function CreateCSV() {
         return `${year}-${month}-${day}`;
     }
 
+    function formatDate1(date: any) {
+        const year = date.getFullYear();
+        const month = (date.getMonth() + 1).toString().padStart(2, '0'); // Months are 0-based
+        const day = date.getDate().toString().padStart(2, '0');
+        return `${year}${month}${day}`;
+    }
+
     useEffect(() => {
         (async() => {
             try{
@@ -55,18 +62,19 @@ function CreateCSV() {
 
     const createCsvData = () => {
         let c = []
+        const today = formatDate1(currentDate)
         for(let i = 0; i < trucks?.length; i ++) {
             for(let j = 0; j < trucks[i].Sids?.length; j++) {
-                let sid = trucks[i].TrailerID + renderLocation(trucks[i].Sids[j].cisco)
+                let sid = trucks[i].TrailerID + renderLocation(trucks[i].Sids[j].Cisco)
                 let row = []
                 row.push(sid)
-                row.push(trucks[i].Sids[j].partNumber)
-                row.push(trucks[i].Sids[j].quantity.low)
+                row.push(trucks[i].Sids[j].Part)
+                row.push(trucks[i].Sids[j].Quantity)
                 row.push('DAL')
                 row.push('P')
                 row.push(',')
-                row.push(renderLocation(trucks[i].Sids[j].cisco))
-                row.push(formattedDate)
+                row.push(renderLocation(trucks[i].Sids[j].Cisco))
+                row.push(today)
                 row.push(trucks[i].TrailerID)
                 row.push('1')
                 c.push(row)

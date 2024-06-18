@@ -80,13 +80,10 @@ function TrucksByDate() {
 
     const Arrived = async (trl: string) => {
         const now = new Date(Date.now()).toLocaleTimeString()
-        trailerArrived(trl, now)
+        //trailerArrived(trl, now)
         try {
-          const params = {
-            TrailerID: trl,
-            ArrivalTime: now
-          }
-          const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_arrivalTime`, {params})
+          const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_arrivalTime`, {TrailerID: trl, ArrivalTime: now})
+          console.log(res.data)
         } catch(error) {
           console.log(error)
         }

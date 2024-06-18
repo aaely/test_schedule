@@ -4,11 +4,10 @@ import { currentView, lastPage } from '../Recoil/router';
 import { truckForm } from '../Recoil/forms';
 import './CSS/EditTrailer.css'
 import { Box, Button, FormControl, Input, InputAdornment, InputLabel } from '@mui/material';
-import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
-import axios from 'axios';
-import { assignDoor } from '../socket';
+import { useRecoilState, useRecoilValue } from 'recoil';
 import { SiMoleculer } from 'react-icons/si';
 import { api } from '../utils/api';
+import { ws } from '../Recoil/socket';
 
 function AssignDoor() {
 
@@ -16,6 +15,7 @@ function AssignDoor() {
     const truck = useRecoilValue(currentTruck)
     const [form, setForm] = useRecoilState(truckForm)
     const [last, setLast] = useRecoilState(lastPage)
+    const w: any = useRecoilValue(ws)
 
     const handleChange = ({target: { id, value}}: any) => {
         setForm({
@@ -34,14 +34,23 @@ function AssignDoor() {
     },[])
 
     const setDoor = async () => {
-        assignDoor(truck.TrailerID, form.door)
+        const msg = {
+            TrailerID: truck.TrailerID,
+            Door: form.door
+          }
+        w.send(JSON.stringify({
+            type: 'set_door',
+            data: {
+                message: JSON.stringify(msg)
+            }
+        }))
         setTimeout(() => {setView(last)}, 200)
         try {
             const params = {
                 TrailerID: truck.TrailerID,
                 Door: form.door
             }
-            const res= await api.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_door`, params)
+            const res= await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_door`, params)
             console.log(res)
         } catch(error) {
             console.log(error)

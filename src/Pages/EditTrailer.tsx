@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { useRecoilState } from 'recoil'
+import { useRecoilState, useRecoilValue } from 'recoil'
 import { currentTruck as t } from '../Recoil/trucks'
 import { currentView, lastPage } from '../Recoil/router';
 import { truckForm } from '../Recoil/forms';
@@ -14,9 +14,8 @@ import {SiMoleculer, SiCheckmarx} from 'react-icons/si'
 import {FaDollarSign} from 'react-icons/fa'
 import { recent } from '../Recoil/trucks';
 import { BiMailSend } from "react-icons/bi";
-import axios from 'axios';
-import { trailerScheduled } from '../socket';
 import { api } from '../utils/api';
+import { ws } from '../Recoil/socket';
 
 
 function ScheduleTruckForm() {
@@ -27,6 +26,7 @@ function ScheduleTruckForm() {
     const [view, setView] = useRecoilState(currentView)
     const [last, setLast] = useRecoilState(lastPage)
     const [form, setForm] = useRecoilState(truckForm)
+    const w: any = useRecoilValue(ws)
 
     const handleChange = ({target: { id, value}}: any) => {
         setForm({
@@ -66,27 +66,34 @@ function ScheduleTruckForm() {
             recentTrucks.splice(index, 1, next)
         }
         setR(recentTrucks)
-        trailerScheduled(
-            currentTruck.TrailerID,
-            'TRAILER_SCHEDULED',
-            form.lastFreeDate,
-            form.scheduledDate,
-            form.scheduledTime,
-            form.scac,
-            currentDate
-        )
+        const msg = {
+            TrailerID: currentTruck.TrailerID,
+            LastFreeDate: form.lastFreeDate,
+            ScheduleDate: form.scheduledDate,
+            ScheduleTime: form.scheduledTime,
+            CarrierCode: form.scac,
+            RequestDate: currentDate,
+            Door: form.door
+        }
+       w.send(JSON.stringify({
+        type: 'schedule_trailer',
+        data: {
+            message: JSON.stringify(msg)
+        }
+       }))
         setTimeout(() => {setView(last)}, 200)
         try {
             const params = {
                 TrailerID: currentTruck.TrailerID,
                 ScheduleTime: form.scheduledTime,
-                ScheduledDate: form.scheduledDate,
+                ScheduleDate: form.scheduledDate,
                 RequestDate: currentDate,
                 LastFreeDate: form.lastFreeDate,
                 CarrierCode: form.scac,
                 ContactEmail: form.contactEmail,
+                Door: form.door
             }
-            const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_schedule`, params)
+            const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_schedule`, params)
             console.log(res)
         } catch(error) {
             console.log(error)
@@ -167,6 +174,16 @@ function ScheduleTruckForm() {
                         <BiMailSend/>
                     </InputAdornment>
                 }
+                />
+                </FormControl>
+                <FormControl sx={{ m: 1, width: '25ch' }} variant="standard">
+                <InputLabel htmlFor="door">Door</InputLabel>
+                <Input
+                id='door'
+                type='text'
+                value={form.door}
+                onChange={handleChange}
+                placeholder='149'
                 />
                 </FormControl>
                 <Button variant='contained' color='success' onClick={() => setDetails()}>Set Details</Button>

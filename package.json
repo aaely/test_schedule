@@ -53,7 +53,7 @@
     "xmlhttprequest": "^1.8.0"
   },
   "scripts": {
-    "start": "concurrently \"node server.ts\" \"react-scripts start\"",
+    "start": "react-scripts start",
     "s": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

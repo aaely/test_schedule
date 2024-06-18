@@ -5,12 +5,13 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { getTrucksByDate } from '../queries/get_trucks_by_date'
 import { currentView, lastPage } from '../Recoil/router'
 import '../Components/CSS/MyTable.css'
-import axios from 'axios'
 import { trailerArrived } from '../socket'
 import {Button} from 'react-bootstrap'
 import { role } from '../Recoil/user';
 import CreateCSV from '../Components/CreateCSV'
 import { CSVLink } from "react-csv";
+import { api } from '../utils/api'
+import { ws } from '../Recoil/socket'
 
 function TodaysSchedule() {
     
@@ -20,6 +21,7 @@ function TodaysSchedule() {
     const [last, setLast] = useRecoilState(lastPage)
     const currentDate = new Date(Date.now()).toLocaleDateString();
     const myRole = useRecoilValue(role)
+    const w: any = useRecoilValue(ws)
 
     useEffect(() => {
         (async() => {
@@ -36,6 +38,7 @@ function TodaysSchedule() {
                         return hoursA - hoursB;
                     }
                 });
+                console.log(res)
                 setTrucks(res)
             } catch(error) {
                 console.log(error)
@@ -79,13 +82,20 @@ function TodaysSchedule() {
 
     const Arrived = async (trl: string) => {
         const now = new Date(Date.now()).toLocaleTimeString()
-        trailerArrived(trl, now)
-        try {
-          const params = {
+        //trailerArrived(trl, now)
+        const msg = {
             TrailerID: trl,
             ArrivalTime: now
           }
-          const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_arrivalTime`, {params})
+        w.send(JSON.stringify({
+            type: 'trailer_arrived',
+            data: {
+              message: JSON.stringify(msg)
+            }
+          }))
+        try {
+          const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_arrivalTime`, {TrailerID: trl, ArrivalTime: now})
+          console.log(res)
         } catch(error) {
           console.log(error)
         }
@@ -93,13 +103,15 @@ function TodaysSchedule() {
 
     const data = () => {
         let c = []
-        let headers = ['Container ID', 'Request Date', 'SCSC Code', 'Schedule Date', 'Schedule Time', 'Arrival Time', 'Door Number', 'Contact Email']
+        let headers = ['Container ID', 'Request Date', 'SCSC Code', 'Plant Code', 'Schedule Date', 'Schedule Time', 'Arrival Time', 'Door Number', 'Contact Email']
         c.push(headers)
         for(let i = 0; i < trks?.length; i++) {
             let row = []
+            let txt = renderLocations(trks[i].CiscoIDs)
             row.push(trks[i].TrailerID)
             row.push(trks[i].Schedule.RequestDate)
             row.push(trks[i].Schedule.CarrierCode)
+            row.push(txt)
             row.push(trks[i].Schedule.ScheduleDate)            
             row.push(trks[i].Schedule.ScheduleTime)            
             row.push(trks[i].Schedule.ArrivalTime)            

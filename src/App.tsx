@@ -13,6 +13,7 @@ import TodaysSchedule from './Pages/TodaysSchedule'
 import TrucksByDate from './Pages/TrucksByDate'
 import { token } from './Recoil/user';
 import Login from './Pages/Login';
+import useWS from './hooks/useWS';
 
 
 const hashMap = new Map([
@@ -29,8 +30,8 @@ function App() {
 
   const view: string = useRecoilValue(currentView)
   const tkn = useRecoilValue(token)
-
-  useWebSocket()
+  useWS()
+  //useWebSocket()
 
   const transition = useTransition(view, {
     from: {opacity: 0, scale: 0},

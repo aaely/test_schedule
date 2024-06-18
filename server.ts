@@ -52,8 +52,11 @@ const JWT_SECRET = 'tO7E8uCjD5rXpQl0FhKwV2yMz4bJnAi9sGeR3kTzXvNmPuLsDq8W';
 
 
 const authenticateToken = (req, res, next) => {
-  const token = req.headers['authorization'];
-  if (!token) return res.sendStatus(401);
+  const authHeader = req.headers['authorization'];
+  if (!authHeader) return res.sendStatus(401);
+
+  const token = authHeader.split(' ')[1]
+  if (!token) return res.sendStatus(401)
 
   jwt.verify(token, JWT_SECRET, (err, user) => {
       if (err) return res.sendStatus(403);

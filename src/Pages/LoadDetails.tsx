@@ -28,7 +28,8 @@ function LoadDetails() {
         (async() => {
             try{
                 const res = await get_load_info(currentTruck.TrailerID)
-                res.sort((a: any, b: any) => a.Sids.ciscoID - b.Sids.ciscoID)
+                console.log(res)
+                res.sort((a: any, b: any) => a.Sid.ciscoID - b.Sid.ciscoID)
                 setL(res)
             } catch(error) {
                 console.log(error)
@@ -60,16 +61,17 @@ function LoadDetails() {
     const createCsvData = () => {
         let c = []
         for(let i = 0; i < l.length; i ++) {
-            let sid = currentTruck.TrailerID + renderLocation(l[i].Sids.ciscoID)
+            console.log(l[i])
+            let sid = currentTruck.TrailerID + renderLocation(l[i].Sid.CiscoID)
             for(let j = 0; j < l[i].Parts.length; j++) {
                 let row = []
                 row.push(sid)
                 row.push(l[i].Parts[j].partNumber)
-                row.push(l[i].Parts[j].quantity.low)
+                row.push(l[i].Parts[j].quantity)
                 row.push('DAL')
                 row.push('P')
                 row.push(',')
-                row.push(renderLocation(l[i].Sids.ciscoID))
+                row.push(renderLocation(l[i].Sid.CiscoID))
                 row.push(formattedDate)
                 row.push(currentTruck.TrailerID)
                 row.push('1')
@@ -89,7 +91,7 @@ function LoadDetails() {
                 return(
                     <React.Fragment>
                         <h3 style={{marginTop: '100px', marginBottom: '100px'}}>
-                            {sid.Sids.id} {'\u00A0'}{'\u00A0'} || {'\u00A0'}{'\u00A0'} {renderLocation(sid.Sids.ciscoID)}
+                            {sid.Sid.id} {'\u00A0'}{'\u00A0'} || {'\u00A0'}{'\u00A0'} {renderLocation(sid.Sid.CiscoID)}
                         </h3>
                             <table>
                                 <thead>
@@ -100,7 +102,7 @@ function LoadDetails() {
                                 </thead>
                                 <tbody>                           
                         {sid?.Parts.map((part: any) => {
-                            console.log(part.quantity.low)
+                            console.log(part.quantity)
                             return(
                                 <React.Fragment>
                                     <tr>
@@ -108,7 +110,7 @@ function LoadDetails() {
                                                 {part.partNumber}
                                         </td>
                                         <td>
-                                                {part.quantity.low}
+                                                {part.quantity}
                                         </td>
                                     </tr>
                                 </React.Fragment>

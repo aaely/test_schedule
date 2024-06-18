@@ -54,6 +54,7 @@ export const connectWithWebSocket = () => {
                                                 ScheduleDate: data.scd,
                                                 ScheduleTime: data.sct,
                                                 CarrierCode: data.scac,
+                                                DoorNumber: data.door
                                                  };
                       // Return a new truck object with the updated Schedule
                       return { ...trk, Schedule: updatedSchedule };
@@ -110,7 +111,8 @@ export const trailerScheduled = (
     scd: string,
     sct: string,
     scac: string,
-    rqd: string
+    rqd: string,
+    door: string
 ) => {
     socket.emit('trailer-scheduled', {
         trailer,
@@ -119,7 +121,8 @@ export const trailerScheduled = (
         scd,
         sct,
         scac,
-        rqd
+        rqd,
+        door
     })
 }
 

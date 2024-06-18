@@ -4,11 +4,11 @@ import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { trucks as trk, currentTruck as ct } from '../Recoil/trucks'
 import { currentView, lastPage } from '../Recoil/router'
 import { Button } from 'react-bootstrap'
-import { updateTrailer, trailerArrived } from '../socket'
 import { getTrucks } from '../queries/getTrucks'
 import { role } from '../Recoil/user';
 import './CSS/MyTable.css'
 import { api } from '../utils/api'
+import { ws } from '../Recoil/socket'
 
 
 export default function MyTable() {
@@ -17,6 +17,9 @@ export default function MyTable() {
   const setCurrentTruck = useSetRecoilState(ct)
   const last = useSetRecoilState(lastPage)
   const myRole = useRecoilValue(role)
+  const w: any = useRecoilValue(ws)
+
+
 
   const updateView = (tr: any, screen: string) => {
     last(view)
@@ -41,10 +44,15 @@ export default function MyTable() {
 
   const Hot = async (trl: string) => {
 
-    
-    updateTrailer(trl)
+    w.send(JSON.stringify({
+      type: 'hot_trailer',
+      data: {
+        message: trl
+      }
+    }))
+    //updateTrailer(trl)
     try {
-      const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/hot_trailer`, {param: trl})
+      const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/hot_trailer`, {TrailerID: trl})
       console.log(res)
     } catch(error) {
       console.log(error)
@@ -53,13 +61,18 @@ export default function MyTable() {
 
   const Arrived = async (trl: string) => {
     const now = new Date(Date.now()).toLocaleTimeString()
-    trailerArrived(trl, now)
+    const msg = {
+      TrailerID: trl,
+      ArrivalTime: now
+    }
+    w.send(JSON.stringify({
+        type: 'trailer_arrived',
+        data: {
+          message: JSON.stringify(msg)
+        }
+      }))
     try {
-      const params = {
-        TrailerID: trl,
-        ArrivalTime: now
-      }
-      const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:5555/api/set_arrivalTime`, {params})
+      const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_arrivalTime`, {TrailerID: trl, ArrivalTime: now})
       console.log(res)
     } catch(error) {
       console.log(error)
