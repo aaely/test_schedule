@@ -6,6 +6,7 @@ import { Box, Button } from '@mui/material'
 import './CSS/EditTrailer.css'
 import { currentView, lastPage } from '../Recoil/router'
 import { CSVLink, CSVDownload } from "react-csv";
+import { token } from '../Recoil/user'
 
 function LoadDetails() {
 
@@ -13,6 +14,7 @@ function LoadDetails() {
     const [l, setL] = useRecoilState(loadDetails)
     const [view, setView] = useRecoilState(currentView)
     const [last, setLast] = useRecoilState(lastPage)
+    const setToken = useSetRecoilState(token)
 
     const currentDate = new Date(Date.now());
     const formattedDate = formatDate(currentDate);
@@ -33,6 +35,7 @@ function LoadDetails() {
                 setL(res)
             } catch(error) {
                 console.log(error)
+                setToken('')
             }
         })()
         return () => {

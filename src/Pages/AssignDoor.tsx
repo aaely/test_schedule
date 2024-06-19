@@ -4,10 +4,11 @@ import { currentView, lastPage } from '../Recoil/router';
 import { truckForm } from '../Recoil/forms';
 import './CSS/EditTrailer.css'
 import { Box, Button, FormControl, Input, InputAdornment, InputLabel } from '@mui/material';
-import { useRecoilState, useRecoilValue } from 'recoil';
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil';
 import { SiMoleculer } from 'react-icons/si';
 import { api } from '../utils/api';
 import { ws } from '../Recoil/socket';
+import { token } from '../Recoil/user';
 
 function AssignDoor() {
 
@@ -16,6 +17,7 @@ function AssignDoor() {
     const [form, setForm] = useRecoilState(truckForm)
     const [last, setLast] = useRecoilState(lastPage)
     const w: any = useRecoilValue(ws)
+    const setToken = useSetRecoilState(token)
 
     const handleChange = ({target: { id, value}}: any) => {
         setForm({
@@ -50,10 +52,11 @@ function AssignDoor() {
                 TrailerID: truck.TrailerID,
                 Door: form.door
             }
-            const res= await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_door`, params)
+            const res= await api.post(`https://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_door`, params)
             console.log(res)
         } catch(error) {
             console.log(error)
+            setToken('')
         }
     }
 

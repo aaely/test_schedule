@@ -8,7 +8,7 @@ const useWS = () => {
   const [t, setT] = useRecoilState(trucks);
 
   useEffect(() => {
-    const ws = new WebSocket(`ws://${process.env.REACT_APP_IP_ADDR || '127.0.0.1'}:9001`);
+    const ws = new WebSocket(`wss://${process.env.REACT_APP_IP_ADDR || '127.0.0.1'}:9001`);
     setWS(ws);
 
     ws.onopen = () => {

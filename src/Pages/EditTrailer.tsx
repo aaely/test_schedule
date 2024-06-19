@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react'
-import { useRecoilState, useRecoilValue } from 'recoil'
+import { useRecoilState, useRecoilValue, useSetRecoilState } from 'recoil'
 import { currentTruck as t } from '../Recoil/trucks'
 import { currentView, lastPage } from '../Recoil/router';
 import { truckForm } from '../Recoil/forms';
@@ -16,6 +16,7 @@ import { recent } from '../Recoil/trucks';
 import { BiMailSend } from "react-icons/bi";
 import { api } from '../utils/api';
 import { ws } from '../Recoil/socket';
+import { token } from '../Recoil/user';
 
 
 function ScheduleTruckForm() {
@@ -27,6 +28,7 @@ function ScheduleTruckForm() {
     const [last, setLast] = useRecoilState(lastPage)
     const [form, setForm] = useRecoilState(truckForm)
     const w: any = useRecoilValue(ws)
+    const setToken = useSetRecoilState(token)
 
     const handleChange = ({target: { id, value}}: any) => {
         setForm({
@@ -47,7 +49,8 @@ function ScheduleTruckForm() {
             lastFreeDate: currentTruck.Schedule.LastFreeDate,
             scheduledTime: currentTruck.Schedule.ScheduleTime,
             contactEmail: currentTruck.Schedule.ContactEmail,
-            scac: currentTruck.Schedule.CarrierCode
+            scac: currentTruck.Schedule.CarrierCode,
+            door: currentTruck.Schedule.DoorNumber
         })
     }, [])
 
@@ -93,10 +96,11 @@ function ScheduleTruckForm() {
                 ContactEmail: form.contactEmail,
                 Door: form.door
             }
-            const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_schedule`, params)
+            const res = await api.post(`https://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_schedule`, params)
             console.log(res)
         } catch(error) {
             console.log(error)
+            setToken('')
         }
     }
 

@@ -7,7 +7,7 @@ import { currentView, lastPage } from '../Recoil/router'
 import '../Components/CSS/MyTable.css'
 import { trailerArrived } from '../socket'
 import {Button} from 'react-bootstrap'
-import { role } from '../Recoil/user';
+import { role, token } from '../Recoil/user';
 import CreateCSV from '../Components/CreateCSV'
 import { CSVLink } from "react-csv";
 import { api } from '../utils/api'
@@ -22,6 +22,7 @@ function TodaysSchedule() {
     const currentDate = new Date(Date.now()).toLocaleDateString();
     const myRole = useRecoilValue(role)
     const w: any = useRecoilValue(ws)
+    const setToken = useSetRecoilState(token)
 
     useEffect(() => {
         (async() => {
@@ -42,6 +43,7 @@ function TodaysSchedule() {
                 setTrucks(res)
             } catch(error) {
                 console.log(error)
+                setToken('')
             }
         })()
     },[])
@@ -94,10 +96,11 @@ function TodaysSchedule() {
             }
           }))
         try {
-          const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_arrivalTime`, {TrailerID: trl, ArrivalTime: now})
+          const res = await api.post(`https://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_arrivalTime`, {TrailerID: trl, ArrivalTime: now})
           console.log(res)
         } catch(error) {
           console.log(error)
+          setToken('')
         }
     }
 

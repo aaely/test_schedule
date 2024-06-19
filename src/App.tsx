@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Landing from './Pages/Landing'
 import useWebSocket from './hooks/useWebSocket';
 import { useRecoilValue } from 'recoil';
@@ -14,6 +14,7 @@ import TrucksByDate from './Pages/TrucksByDate'
 import { token } from './Recoil/user';
 import Login from './Pages/Login';
 import useWS from './hooks/useWS';
+import axios from 'axios';
 
 
 const hashMap = new Map([
@@ -32,6 +33,7 @@ function App() {
   const tkn = useRecoilValue(token)
   useWS()
   //useWebSocket()
+
 
   const transition = useTransition(view, {
     from: {opacity: 0, scale: 0},

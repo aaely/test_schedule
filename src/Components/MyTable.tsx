@@ -5,7 +5,7 @@ import { trucks as trk, currentTruck as ct } from '../Recoil/trucks'
 import { currentView, lastPage } from '../Recoil/router'
 import { Button } from 'react-bootstrap'
 import { getTrucks } from '../queries/getTrucks'
-import { role } from '../Recoil/user';
+import { role, token } from '../Recoil/user';
 import './CSS/MyTable.css'
 import { api } from '../utils/api'
 import { ws } from '../Recoil/socket'
@@ -18,7 +18,7 @@ export default function MyTable() {
   const last = useSetRecoilState(lastPage)
   const myRole = useRecoilValue(role)
   const w: any = useRecoilValue(ws)
-
+  const setToken = useSetRecoilState(token)
 
 
   const updateView = (tr: any, screen: string) => {
@@ -38,6 +38,7 @@ export default function MyTable() {
         }
       } catch(error) {
         console.log(error)
+        setToken('')
       }
     })()
   }, [])
@@ -52,10 +53,11 @@ export default function MyTable() {
     }))
     //updateTrailer(trl)
     try {
-      const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/hot_trailer`, {TrailerID: trl})
+      const res = await api.post(`https://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/hot_trailer`, {TrailerID: trl})
       console.log(res)
     } catch(error) {
       console.log(error)
+      setToken('')
     }
   }
 
@@ -72,10 +74,11 @@ export default function MyTable() {
         }
       }))
     try {
-      const res = await api.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_arrivalTime`, {TrailerID: trl, ArrivalTime: now})
+      const res = await api.post(`https://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_arrivalTime`, {TrailerID: trl, ArrivalTime: now})
       console.log(res)
     } catch(error) {
       console.log(error)
+      setToken('')
     }
   }
 

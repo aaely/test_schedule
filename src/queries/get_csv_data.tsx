@@ -8,3 +8,4 @@ export const get_csv_data = async (date: string) => {
         console.log(error)
     }
 }
+

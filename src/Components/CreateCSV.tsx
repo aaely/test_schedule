@@ -6,13 +6,14 @@ import { Box, Button } from '@mui/material'
 import '../Pages/CSS/EditTrailer.css'
 import { currentView, lastPage } from '../Recoil/router'
 import { CSVLink } from "react-csv";
+import { token } from '../Recoil/user'
 
 function CreateCSV() {
 
     const [trucks, setTrucks] = useState<any>([])
     const [view, setView] = useRecoilState(currentView)
     const [last, setLast] = useRecoilState(lastPage)
-
+    const setToken = useSetRecoilState(token)
     const currentDate = new Date(Date.now());
     const formattedDate = formatDate(currentDate);
 
@@ -38,6 +39,7 @@ function CreateCSV() {
                 setTrucks(res)
             } catch(error) {
                 console.log(error)
+                setToken('')
             }
         })()
     }, [])

@@ -3,7 +3,7 @@ import { getRecoil } from 'recoil-nexus';
 import { token } from '../Recoil/user';
 
 export const api = axios.create({
-    baseURL: `http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}`,  // Your server's base URL
+    baseURL: `https://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}`,  // Your server's base URL
 });
 
 // Add a request interceptor to include the JWT token in the headers

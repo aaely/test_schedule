@@ -12,7 +12,7 @@ import { SiCheckmarx } from 'react-icons/si'
 import { FaDollarSign } from 'react-icons/fa'
 import { getTrucksByDateRange } from '../queries/get_trucks_date_range'
 import { trailerArrived } from '../socket'
-import { role } from '../Recoil/user';
+import { role, token } from '../Recoil/user';
 
 function TrucksByDate() {
     
@@ -23,6 +23,7 @@ function TrucksByDate() {
     const [date, setDate] = useRecoilState(date1)
     const [d2, setDate2] = useRecoilState(date2)
     const myRole = useRecoilValue(role)
+    const setToken = useSetRecoilState(token)
 
     const getTrucks = async () => {
         try {
@@ -40,6 +41,7 @@ function TrucksByDate() {
             setDt(res)
         } catch(error) {
             console.log(error)
+            setToken('')
         }
     }
 
@@ -82,7 +84,7 @@ function TrucksByDate() {
         const now = new Date(Date.now()).toLocaleTimeString()
         //trailerArrived(trl, now)
         try {
-          const res = await axios.post(`http://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_arrivalTime`, {TrailerID: trl, ArrivalTime: now})
+          const res = await axios.post(`https://${process.env.REACT_APP_IP_ADDR}:${process.env.REACT_APP_PORT}/api/set_arrivalTime`, {TrailerID: trl, ArrivalTime: now})
           console.log(res.data)
         } catch(error) {
           console.log(error)
